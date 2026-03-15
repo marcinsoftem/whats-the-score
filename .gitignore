@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documentation
+/docs/
+
+# external skills
+/ui-ux-pro-max-skill/
