@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { ScoreCounter } from "@/components/match/ScoreCounter";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { Player } from "@/types";
-import { ChevronLeft, Save } from "lucide-react";
+import { ChevronLeft, Save, Trash2, Pencil } from "lucide-react";
 import Link from "next/link";
 
 // Mock data for demo
@@ -46,6 +46,19 @@ function MatchPageContent() {
     setGames([...games, { p1: score1, p2: score2 }]);
     setScore1(0);
     setScore2(0);
+  };
+
+  const handleDeleteGame = (index: number) => {
+    const newGames = [...games];
+    newGames.splice(index, 1);
+    setGames(newGames);
+  };
+
+  const handleEditGame = (index: number) => {
+    const game = games[index];
+    setScore1(game.p1);
+    setScore2(game.p2);
+    handleDeleteGame(index);
   };
 
   const handleGoBack = () => {
@@ -118,7 +131,23 @@ function MatchPageContent() {
             </div>
           ) : (
             games.map((game, i) => (
-              <div key={i} className="card min-w-[110px] flex flex-col items-center gap-1 py-4 px-4 bg-white/5 border border-white/5 hover:border-primary/30 transition-colors">
+              <div key={i} className="card min-w-[140px] flex flex-col items-center gap-1 py-4 px-4 bg-white/5 border border-white/5 hover:border-primary/30 transition-colors relative group">
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => handleEditGame(i)}
+                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-black transition-colors"
+                    title="Edytuj"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteGame(i)}
+                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center hover:bg-secondary hover:text-white transition-colors"
+                    title="Usuń"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
                 <span className="text-[9px] uppercase text-muted font-black tracking-widest">Gem {i+1}</span>
                 <span className="text-2xl font-bold font-barlow-condensed tracking-wider text-foreground">
                   <span className={game.p1 > game.p2 ? "text-primary" : ""}>{game.p1}</span>
