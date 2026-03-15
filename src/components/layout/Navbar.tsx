@@ -35,7 +35,7 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-accent border-t border-border px-6 py-3 flex justify-between items-center z-50 max-w-md mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 bg-[#121212] border-t border-white/10 px-6 py-3 flex justify-between items-center z-[100] max-w-md mx-auto">
       <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`}>
         <HomeIcon className="w-5 h-5" />
         <span className="text-[10px] font-bold uppercase tracking-wider">Home</span>
