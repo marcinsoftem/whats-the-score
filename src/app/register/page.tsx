@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, isConfigured } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { UserPlus, Loader2, FastForward } from 'lucide-react'
@@ -27,8 +27,8 @@ export default function RegisterPage() {
     setError(null)
 
     // Check if Supabase is configured
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL === undefined || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')) {
-      setError('Błąd konfiguracji: Brak danych Supabase w pliku .env.local. Przeczytaj walkthrough.md, aby dowiedzieć się jak to naprawić.')
+    if (!isConfigured()) {
+      setError('Błąd konfiguracji Supabase. Na Vercel upewnij się, że masz dodane zmienne NEXT_PUBLIC_SUPABASE_URL oraz NEXT_PUBLIC_SUPABASE_ANON_KEY (z przedrostkiem NEXT_PUBLIC_).')
       setLoading(false)
       return
     }

@@ -6,3 +6,8 @@ export const createClient = () => {
   
   return createBrowserClient(supabaseUrl, supabaseKey)
 }
+
+export const isConfigured = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  return url && url !== '' && !url.includes('placeholder')
+}
