@@ -30,8 +30,15 @@ function MatchPageContent() {
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
 
-  // Squash validation: min 11 points and at least 2 point difference
-  const isValidScore = (score1 >= 11 || score2 >= 11) && Math.abs(score1 - score2) >= 2;
+  // Strict Squash validation (PAR-11):
+  // 1. A game is won by the first player to reach 11 points (if lead is at least 2).
+  // 2. If score reaches 10-10, game continues until lead is exactly 2.
+  const isValidScore = (
+    (score1 === 11 && score2 <= 9) || 
+    (score2 === 11 && score1 <= 9) || 
+    (score1 > 11 && score1 - score2 === 2) || 
+    (score2 > 11 && score2 - score1 === 2)
+  );
 
   const handleFinishGame = () => {
     if (!isValidScore) return;
