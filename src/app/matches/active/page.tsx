@@ -30,8 +30,11 @@ function MatchPageContent() {
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
 
+  // Squash validation: min 11 points and at least 2 point difference
+  const isValidScore = (score1 >= 11 || score2 >= 11) && Math.abs(score1 - score2) >= 2;
+
   const handleFinishGame = () => {
-    if (score1 === 0 && score2 === 0) return;
+    if (!isValidScore) return;
     
     setGames([...games, { p1: score1, p2: score2 }]);
     setScore1(0);
@@ -39,12 +42,11 @@ function MatchPageContent() {
   };
 
   const handleGoBack = () => {
-    // Optionally add a confirm if scores are not 0
     window.history.back();
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 pb-32">
       <header className="flex items-center gap-4">
         <button 
           onClick={handleGoBack}
@@ -61,14 +63,14 @@ function MatchPageContent() {
       <div className="flex justify-between items-center bg-accent/30 p-4 rounded-3xl border border-white/5 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-primary">{p1Games}</span>
-          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">Gamy</span>
+          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">Gemy</span>
         </div>
         <div className="text-[10px] uppercase font-black text-primary tracking-[0.2em] px-5 py-2 bg-primary/10 rounded-full border border-primary/20">
           Wynik Meczu
         </div>
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-secondary">{p2Games}</span>
-          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">Gamy</span>
+          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">Gemy</span>
         </div>
       </div>
 
@@ -88,19 +90,19 @@ function MatchPageContent() {
 
       <section className="flex flex-col gap-4">
         <div className="flex justify-between items-end">
-          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Poprzednie Gamy</h2>
+          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Poprzednie Gemy</h2>
           <span className="text-[10px] text-primary font-bold">{games.length} Zapisano</span>
         </div>
         
         <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
           {games.length === 0 ? (
             <div className="w-full py-8 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-muted/30 text-xs uppercase font-bold tracking-widest italic">
-              Brak rozegranych gamów
+              Brak rozegranych gemów
             </div>
           ) : (
             games.map((game, i) => (
               <div key={i} className="card min-w-[110px] flex flex-col items-center gap-1 py-4 px-4 bg-white/5 border border-white/5 hover:border-primary/30 transition-colors">
-                <span className="text-[9px] uppercase text-muted font-black tracking-widest">Gama {i+1}</span>
+                <span className="text-[9px] uppercase text-muted font-black tracking-widest">Gem {i+1}</span>
                 <span className="text-2xl font-bold font-barlow-condensed tracking-wider text-foreground">
                   <span className={game.p1 > game.p2 ? "text-primary" : ""}>{game.p1}</span>
                   <span className="mx-1 text-muted">:</span>
@@ -112,13 +114,15 @@ function MatchPageContent() {
         </div>
       </section>
       
-      <button 
-        onClick={handleFinishGame}
-        disabled={score1 === 0 && score2 === 0}
-        className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.2)] disabled:opacity-50 disabled:grayscale disabled:shadow-none transition-all"
-      >
-        Zakończ Gamę
-      </button>
+      <div className="fixed bottom-[72px] left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-40 max-w-md mx-auto">
+        <button 
+          onClick={handleFinishGame}
+          disabled={!isValidScore}
+          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.2)] disabled:opacity-50 disabled:grayscale disabled:shadow-none transition-all uppercase italic"
+        >
+          {isValidScore ? 'Zapisz Gem' : 'Graj dalej...'}
+        </button>
+      </div>
     </div>
   );
 }
