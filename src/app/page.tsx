@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Trophy, Calendar, Users, User as UserIcon, Shield } from "lucide-react";
+import { Plus, Trophy, Calendar, Users, User as UserIcon, Shield, Check } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { PlayerCard } from "@/components/player/PlayerCard";
@@ -46,9 +46,6 @@ export default function Home() {
         p.nickname.toLowerCase() !== userPlayer.nickname.toLowerCase()
       );
       setAvailablePlayers(opponents);
-      if (opponents.length > 0) {
-        setOpponentId(opponents[0].id);
-      }
 
       // 3. Load Match History
       const history = localStorage.getItem('wts_match_history');
@@ -134,8 +131,8 @@ export default function Home() {
                     )}
                   </div>
                   {opponentId === player.id && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-secondary rounded-full flex items-center justify-center border-2 border-background animate-in zoom-in duration-300">
-                      <Plus className="w-3 h-3 text-white rotate-45" />
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-background animate-in zoom-in duration-300 shadow-lg">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
                   )}
                 </div>
@@ -159,6 +156,16 @@ export default function Home() {
           </div>
         </div>
 
+        {currentUser && opponentId && (
+          <div className="flex items-center justify-center gap-3 mb-4 animate-in slide-in-from-top-2 duration-500">
+            <span className="text-[14px] font-black uppercase tracking-widest text-primary italic">{currentUser.nickname}</span>
+            <span className="text-[12px] font-black text-muted opacity-30 italic">VS</span>
+            <span className="text-[14px] font-black uppercase tracking-widest text-secondary italic">
+              {availablePlayers.find(p => p.id === opponentId)?.nickname}
+            </span>
+          </div>
+        )}
+
         <div className="relative">
           <button 
             onClick={handleNewMatch}
@@ -173,16 +180,6 @@ export default function Home() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 blur-2xl -z-0 rounded-full animate-pulse" />
           )}
         </div>
-
-        {currentUser && opponentId && (
-          <div className="flex items-center justify-center gap-2 mt-[-8px] animate-in slide-in-from-top-2 duration-500">
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary italic">{currentUser.nickname}</span>
-            <span className="text-[8px] font-black text-muted opacity-30 italic">VS</span>
-            <span className="text-[9px] font-black uppercase tracking-widest text-secondary italic">
-              {availablePlayers.find(p => p.id === opponentId)?.nickname}
-            </span>
-          </div>
-        )}
       </section>
 
       <section className="flex flex-col gap-4">
@@ -199,30 +196,38 @@ export default function Home() {
         ) : (
           <div className="flex flex-col gap-4">
             {matches.map((match, idx) => (
-              <Link href={`/matches/active?id=${match.id}`} key={match.id || idx} className="card p-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98]">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-primary" />
-                    {formatDate(match.timestamp)}
-                  </span>
-                  <div className="text-lg font-black font-barlow-condensed tracking-tighter">
+              <Link href={`/matches/active?id=${match.id}`} key={match.id || idx} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3">
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted shrink-0 w-10">
+                  {formatDate(match.timestamp)}
+                </span>
+                
+                <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">{match.players[0].nickname}</span>
+                    <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
+                      {match.players[0].avatarUrl ? (
+                        <img src={match.players[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        match.players[0].nickname[0].toUpperCase()
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-lg font-black font-barlow-condensed tracking-tighter flex items-center gap-1 shrink-0">
                     <span className="text-primary">{match.totalGemy1}</span>
-                    <span className="mx-2 opacity-20">:</span>
+                    <span className="opacity-20 text-xs">:</span>
                     <span className="text-secondary">{match.totalGemy2}</span>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 items-center">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
-                      {match.players[0].nickname[0].toUpperCase()}
+
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[9px] font-black text-secondary overflow-hidden shrink-0">
+                      {match.players[1].avatarUrl ? (
+                        <img src={match.players[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        match.players[1].nickname[0].toUpperCase()
+                      )}
                     </div>
-                    <span className="text-xs font-bold uppercase truncate">{match.players[0].nickname}</span>
-                  </div>
-                  <div className="flex items-center gap-2 justify-end overflow-hidden">
-                    <span className="text-xs font-bold uppercase truncate">{match.players[1].nickname}</span>
-                    <div className="w-6 h-6 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[10px] font-black text-secondary shrink-0">
-                      {match.players[1].nickname[0].toUpperCase()}
-                    </div>
+                    <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">{match.players[1].nickname}</span>
                   </div>
                 </div>
               </Link>

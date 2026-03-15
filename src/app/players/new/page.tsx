@@ -72,7 +72,7 @@ export default function AddPlayerPage() {
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
-            Dodaj Zawodnika
+            DODAJ WIRTUALNEGO ZAWODNIKA
           </h1>
         </div>
         
@@ -94,13 +94,10 @@ export default function AddPlayerPage() {
               </div>
             </div>
             
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center border-4 border-background shadow-lg text-black">
-              <RefreshCcw className="w-4 h-4" />
-            </div>
           </button>
           
           <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">Kliknij w awatar aby wylosować</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">KLIKNIJ, ABY WYLOSOWAĆ</p>
           </div>
         </div>
       </header>
@@ -121,7 +118,7 @@ export default function AddPlayerPage() {
             className={`w-full bg-white/5 border rounded-2xl p-4 text-lg font-bold text-foreground outline-none transition-all placeholder:text-muted/20 ${
               error ? 'border-secondary/50 bg-secondary/5' : 'border-white/10 focus:border-primary/50'
             }`}
-            placeholder="Ksywka..."
+            placeholder="Wpisz pseudonim..."
             value={nickname}
             onChange={(e) => {
               setNickname(e.target.value);
@@ -143,7 +140,7 @@ export default function AddPlayerPage() {
           ) : (
             <>
               <UserPlus className="w-6 h-6" />
-              UTWÓRZ GRACZA
+              UTWÓRZ ZAWODNIKA
             </>
           )}
         </button>
