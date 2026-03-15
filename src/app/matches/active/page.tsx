@@ -85,12 +85,22 @@ function MatchPageContent() {
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[1px] h-3/4 bg-white/5 hidden sm:block" />
         
         <div className="flex flex-col gap-8">
-          <PlayerCard player={initialPlayers[0]} className="bg-transparent border-none p-0" />
+          <button 
+            onClick={() => { setScore1(11); setScore2(7); }}
+            className="text-left active:scale-95 transition-transform"
+          >
+            <PlayerCard player={initialPlayers[0]} className="bg-transparent border-none p-0" />
+          </button>
           <ScoreCounter label="Twój Wynik" value={score1} onChange={setScore1} color="primary" />
         </div>
 
         <div className="flex flex-col gap-8">
-          <PlayerCard player={initialPlayers[1]} className="bg-transparent border-none p-0" alignRight />
+          <button 
+            onClick={() => { setScore1(7); setScore2(11); }}
+            className="text-right active:scale-95 transition-transform"
+          >
+            <PlayerCard player={initialPlayers[1]} className="bg-transparent border-none p-0" alignRight />
+          </button>
           <ScoreCounter label="Przeciwnik" value={score2} onChange={setScore2} color="secondary" />
         </div>
       </div>
