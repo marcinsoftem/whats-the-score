@@ -125,7 +125,7 @@ function MatchPageContent() {
         <button 
           onClick={handleFinishGame}
           disabled={!isValidScore}
-          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all uppercase italic font-black"
+          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black"
         >
           Zapisz
         </button>
