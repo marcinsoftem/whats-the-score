@@ -26,6 +26,7 @@ function MatchPageContent() {
   const [score1, setScore1] = useState(0);
   const [score2, setScore2] = useState(0);
   const [games, setGames] = useState<{ p1: number, p2: number }[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
@@ -43,7 +44,15 @@ function MatchPageContent() {
   const handleFinishGame = () => {
     if (!isValidScore) return;
     
-    setGames([...games, { p1: score1, p2: score2 }]);
+    if (editingIndex !== null) {
+      const newGames = [...games];
+      newGames[editingIndex] = { p1: score1, p2: score2 };
+      setGames(newGames);
+      setEditingIndex(null);
+    } else {
+      setGames([...games, { p1: score1, p2: score2 }]);
+    }
+    
     setScore1(0);
     setScore2(0);
   };
@@ -52,13 +61,26 @@ function MatchPageContent() {
     const newGames = [...games];
     newGames.splice(index, 1);
     setGames(newGames);
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setScore1(0);
+      setScore2(0);
+    } else if (editingIndex !== null && editingIndex > index) {
+      setEditingIndex(editingIndex - 1);
+    }
   };
 
   const handleEditGame = (index: number) => {
     const game = games[index];
     setScore1(game.p1);
     setScore2(game.p2);
-    handleDeleteGame(index);
+    setEditingIndex(index);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setScore1(0);
+    setScore2(0);
   };
 
   const handleGoBack = () => {
@@ -120,7 +142,17 @@ function MatchPageContent() {
 
       <section className="flex flex-col gap-4">
         <div className="flex justify-between items-end">
-          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Poprzednie Gemy</h2>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted">Poprzednie Gemy</h2>
+            {editingIndex !== null && (
+              <button 
+                onClick={handleCancelEdit}
+                className="text-[10px] text-secondary font-bold hover:underline flex items-center gap-1 uppercase tracking-tighter"
+              >
+                Anuluj edycję gema {editingIndex + 1}
+              </button>
+            )}
+          </div>
           <span className="text-[10px] text-primary font-bold">{games.length} Zapisano</span>
         </div>
         
@@ -131,11 +163,20 @@ function MatchPageContent() {
             </div>
           ) : (
             games.map((game, i) => (
-              <div key={i} className="card min-w-[140px] flex flex-col items-center gap-1 py-4 px-4 bg-white/5 border border-white/5 hover:border-primary/30 transition-colors relative group">
+              <div 
+                key={i} 
+                className={`card min-w-[140px] flex flex-col items-center gap-1 py-4 px-4 border transition-all relative group ${
+                  editingIndex === i 
+                    ? "bg-primary/5 border-primary shadow-[0_0_15px_rgba(198,255,0,0.1)] ring-1 ring-primary/20" 
+                    : "bg-white/5 border-white/5 hover:border-primary/30"
+                }`}
+              >
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={() => handleEditGame(i)}
-                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-black transition-colors"
+                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                      editingIndex === i ? "bg-primary text-black" : "bg-white/10 hover:bg-primary hover:text-black"
+                    }`}
                     title="Edytuj"
                   >
                     <Pencil className="w-3 h-3" />
@@ -148,7 +189,9 @@ function MatchPageContent() {
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
-                <span className="text-[9px] uppercase text-muted font-black tracking-widest">Gem {i+1}</span>
+                <span className={`text-[9px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>
+                  Gem {i+1} {editingIndex === i && "(EDYTUJESZ)"}
+                </span>
                 <span className="text-2xl font-bold font-barlow-condensed tracking-wider text-foreground">
                   <span className={game.p1 > game.p2 ? "text-primary" : ""}>{game.p1}</span>
                   <span className="mx-1 text-muted">:</span>
@@ -166,7 +209,7 @@ function MatchPageContent() {
           disabled={!isValidScore}
           className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black"
         >
-          Zapisz
+          {editingIndex !== null ? 'Aktualizuj' : 'Zapisz'}
         </button>
       </div>
     </div>
