@@ -28,6 +28,58 @@ function MatchPageContent() {
   const [games, setGames] = useState<{ p1: number, p2: number }[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const savedMatch = localStorage.getItem('wts_active_match');
+    if (savedMatch) {
+      try {
+        const data = JSON.parse(savedMatch);
+        setScore1(data.score1 || 0);
+        setScore2(data.score2 || 0);
+        setGames(data.games || []);
+      } catch (e) {
+        console.error("Failed to parse saved match", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    const state = { score1, score2, games };
+    localStorage.setItem('wts_active_match', JSON.stringify(state));
+    
+    // Also update global history whenever games change
+    if (games.length > 0) {
+      const history = JSON.parse(localStorage.getItem('wts_match_history') || '[]');
+      // Simple logic: we'll store/update this match by a temporary ID
+      // Real implementation would be more robust once with Supabase
+      const matchId = "current-demo-match"; 
+      const existingMatchIdx = history.findIndex((m: any) => m.id === matchId);
+      
+      const matchData = {
+        id: matchId,
+        players: initialPlayers,
+        games: games,
+        timestamp: new Date().toISOString(),
+        score1: score1, // current game score
+        score2: score2,
+        totalGemy1: games.filter(g => g.p1 > g.p2).length,
+        totalGemy2: games.filter(g => g.p2 > g.p1).length,
+      };
+
+      if (existingMatchIdx >= 0) {
+        history[existingMatchIdx] = matchData;
+      } else {
+        history.unshift(matchData);
+      }
+      localStorage.setItem('wts_match_history', JSON.stringify(history));
+    }
+  }, [score1, score2, games, isLoaded]);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
@@ -87,8 +139,10 @@ function MatchPageContent() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    window.location.href = "/"; // Force navigation to home to ensure state is clear if needed, or just home
   };
+
+  if (!isLoaded) return null; // Prevent flash of 0:0
 
   return (
     <div className="flex flex-col gap-8 pb-32">
@@ -99,10 +153,7 @@ function MatchPageContent() {
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-2xl flex-1 font-bold tracking-tight uppercase">Mecz w toku</h1>
-        <button className="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center active:scale-90 transition-transform shadow-[0_0_15px_rgba(198,255,0,0.3)]">
-          <Save className="w-5 h-5" />
-        </button>
+        <h1 className="text-2xl flex-1 font-bold tracking-tight uppercase text-center pr-10">Mecz w toku</h1>
       </header>
 
       <div className="flex justify-between items-center bg-accent/30 p-4 rounded-3xl border border-white/5 backdrop-blur-sm">
