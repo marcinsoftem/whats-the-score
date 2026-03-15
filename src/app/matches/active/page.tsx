@@ -127,7 +127,7 @@ function MatchPageContent() {
             onClick={() => { setScore1(11); setScore2(7); }}
             className="text-left active:scale-95 transition-transform"
           >
-            <PlayerCard player={initialPlayers[0]} className="bg-transparent border-none p-0" />
+            <PlayerCard player={initialPlayers[0]} color="primary" className="bg-transparent border-none p-0" />
           </button>
           <ScoreCounter label="Twój Wynik" value={score1} onChange={setScore1} color="primary" />
         </div>
@@ -137,7 +137,7 @@ function MatchPageContent() {
             onClick={() => { setScore1(7); setScore2(11); }}
             className="text-right active:scale-95 transition-transform"
           >
-            <PlayerCard player={initialPlayers[1]} className="bg-transparent border-none p-0" alignRight />
+            <PlayerCard player={initialPlayers[1]} color="secondary" className="bg-transparent border-none p-0" alignRight />
           </button>
           <ScoreCounter label="Przeciwnik" value={score2} onChange={setScore2} color="secondary" />
         </div>
@@ -193,44 +193,38 @@ function MatchPageContent() {
         <button 
           onClick={handleFinishGame}
           disabled={!isValidScore}
-          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black"
+          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black uppercase"
         >
-          {editingIndex !== null ? 'Aktualizuj' : 'Zapisz'}
+          {editingIndex !== null ? 'Aktualizuj Gem' : 'Zapisz Gem'}
         </button>
       </div>
 
       {/* Mobile Action Sheet */}
       {actionSheetIndex !== null && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-16 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div 
             className="absolute inset-0" 
             onClick={() => setActionSheetIndex(null)}
           />
-          <div className="w-full max-w-md bg-[#1a1a1a] rounded-[2.5rem] p-6 pb-8 shadow-2xl relative animate-in slide-in-from-bottom-full duration-300 border border-white/10">
+          <div className="w-full max-w-md bg-[#1a1a1a] rounded-[2.5rem] p-6 pb-14 shadow-2xl relative animate-in slide-in-from-bottom-full duration-300 border border-white/10">
             <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6" />
             <h3 className="text-center font-black uppercase tracking-widest text-muted mb-6">
               Opcje dla Gema {actionSheetIndex + 1}
             </h3>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <button 
-                onClick={() => handleEditGame(actionSheetIndex)}
-                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest hover:bg-primary hover:text-black transition-all active:scale-95"
+                onClick={() => handleEditGame(actionSheetIndex!)}
+                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-foreground transition-all active:scale-95"
               >
                 <Pencil className="w-5 h-5" />
                 Edytuj wynik
               </button>
               <button 
-                onClick={() => handleDeleteGame(actionSheetIndex)}
-                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-secondary hover:bg-secondary hover:text-white transition-all active:scale-95"
+                onClick={() => handleDeleteGame(actionSheetIndex!)}
+                className="w-full py-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-red-500 transition-all active:scale-95"
               >
                 <Trash2 className="w-5 h-5" />
                 Usuń gem
-              </button>
-              <button 
-                onClick={() => setActionSheetIndex(null)}
-                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center font-bold uppercase tracking-widest text-muted mt-2 active:scale-95"
-              >
-                Anuluj
               </button>
             </div>
           </div>
