@@ -121,7 +121,7 @@ function MatchPageContent() {
         </div>
       </section>
       
-      <div className="fixed bottom-[72px] left-0 right-0 p-4 bg-[#121212] border-t border-white/5 z-[90] max-w-md mx-auto shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+      <div className="fixed bottom-[71px] left-0 right-0 p-4 bg-[#121212] z-[90] max-w-md mx-auto shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
         <button 
           onClick={handleFinishGame}
           disabled={!isValidScore}
