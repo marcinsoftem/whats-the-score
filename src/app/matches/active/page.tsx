@@ -121,13 +121,13 @@ function MatchPageContent() {
         </div>
       </section>
       
-      <div className="fixed bottom-[72px] left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-40 max-w-md mx-auto">
+      <div className="fixed bottom-[72px] left-0 right-0 p-4 bg-background border-t border-white/5 z-40 max-w-md mx-auto">
         <button 
           onClick={handleFinishGame}
           disabled={!isValidScore}
-          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.2)] disabled:opacity-50 disabled:grayscale disabled:shadow-none transition-all uppercase italic"
+          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all uppercase italic font-black"
         >
-          {isValidScore ? 'Zapisz Gem' : 'Graj dalej...'}
+          Zapisz
         </button>
       </div>
     </div>
