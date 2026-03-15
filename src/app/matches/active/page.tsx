@@ -27,6 +27,7 @@ function MatchPageContent() {
   const [score2, setScore2] = useState(0);
   const [games, setGames] = useState<{ p1: number, p2: number }[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
@@ -68,6 +69,7 @@ function MatchPageContent() {
     } else if (editingIndex !== null && editingIndex > index) {
       setEditingIndex(editingIndex - 1);
     }
+    setActionSheetIndex(null);
   };
 
   const handleEditGame = (index: number) => {
@@ -75,6 +77,7 @@ function MatchPageContent() {
     setScore1(game.p1);
     setScore2(game.p2);
     setEditingIndex(index);
+    setActionSheetIndex(null);
   };
 
   const handleCancelEdit = () => {
@@ -163,32 +166,15 @@ function MatchPageContent() {
             </div>
           ) : (
             games.map((game, i) => (
-              <div 
+              <button 
                 key={i} 
-                className={`card min-w-[140px] flex flex-col items-center gap-1 py-4 px-4 border transition-all relative group ${
+                onClick={() => setActionSheetIndex(i)}
+                className={`card min-w-[140px] flex flex-col items-center gap-1 py-4 px-4 border transition-all text-center relative ${
                   editingIndex === i 
                     ? "bg-primary/5 border-primary shadow-[0_0_15px_rgba(198,255,0,0.1)] ring-1 ring-primary/20" 
-                    : "bg-white/5 border-white/5 hover:border-primary/30"
+                    : "bg-white/5 border-white/5 hover:border-primary/30 active:scale-95"
                 }`}
               >
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => handleEditGame(i)}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                      editingIndex === i ? "bg-primary text-black" : "bg-white/10 hover:bg-primary hover:text-black"
-                    }`}
-                    title="Edytuj"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteGame(i)}
-                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center hover:bg-secondary hover:text-white transition-colors"
-                    title="Usuń"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
                 <span className={`text-[9px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>
                   Gem {i+1} {editingIndex === i && "(EDYTUJESZ)"}
                 </span>
@@ -197,7 +183,7 @@ function MatchPageContent() {
                   <span className="mx-1 text-muted">:</span>
                   <span className={game.p2 > game.p1 ? "text-secondary" : ""}>{game.p2}</span>
                 </span>
-              </div>
+              </button>
             ))
           )}
         </div>
@@ -212,6 +198,44 @@ function MatchPageContent() {
           {editingIndex !== null ? 'Aktualizuj' : 'Zapisz'}
         </button>
       </div>
+
+      {/* Mobile Action Sheet */}
+      {actionSheetIndex !== null && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0" 
+            onClick={() => setActionSheetIndex(null)}
+          />
+          <div className="w-full max-w-md bg-[#1a1a1a] rounded-[2.5rem] p-6 shadow-2xl relative animate-in slide-in-from-bottom-full duration-300 border border-white/10">
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6" />
+            <h3 className="text-center font-black uppercase tracking-widest text-muted mb-6">
+              Opcje dla Gema {actionSheetIndex + 1}
+            </h3>
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => handleEditGame(actionSheetIndex)}
+                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest hover:bg-primary hover:text-black transition-all"
+              >
+                <Pencil className="w-5 h-5" />
+                Edytuj wynik
+              </button>
+              <button 
+                onClick={() => handleDeleteGame(actionSheetIndex)}
+                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-secondary hover:bg-secondary hover:text-white transition-all"
+              >
+                <Trash2 className="w-5 h-5" />
+                Usuń gem
+              </button>
+              <button 
+                onClick={() => setActionSheetIndex(null)}
+                className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center font-bold uppercase tracking-widest text-muted mt-2"
+              >
+                Anuluj
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
