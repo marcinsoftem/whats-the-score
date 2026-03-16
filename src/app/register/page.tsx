@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient, isConfigured } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { UserPlus, Loader2, FastForward } from 'lucide-react'
+import { UserPlus, Loader2, FastForward, CheckCircle2 } from 'lucide-react'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -14,7 +14,41 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  const inviteId = searchParams.get('invite_id')
+  const inviteNickname = searchParams.get('nickname')
+  const inviteSeed = searchParams.get('seed')
+
+  useEffect(() => {
+    if (inviteNickname) setNickname(inviteNickname)
+  }, [inviteNickname])
+
+  const migrateMatches = (newUserId: string) => {
+    if (!inviteId) return
+
+    // 1. Migrate match history
+    const history = localStorage.getItem('wts_match_history')
+    if (history) {
+      const matches = JSON.parse(history)
+      const updatedMatches = matches.map((match: any) => {
+        const updatedPlayers = match.players.map((p: any) => 
+          p.id === inviteId ? { ...p, id: newUserId, type: 'real' } : p
+        )
+        return { ...match, players: updatedPlayers }
+      })
+      localStorage.setItem('wts_match_history', JSON.stringify(updatedMatches))
+    }
+
+    // 2. Remove from virtual players list
+    const savedPlayers = localStorage.getItem('wts_players')
+    if (savedPlayers) {
+      const players = JSON.parse(savedPlayers)
+      const filteredPlayers = players.filter((p: any) => p.id !== inviteId)
+      localStorage.setItem('wts_players', JSON.stringify(filteredPlayers))
+    }
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,13 +67,18 @@ export default function RegisterPage() {
       return
     }
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const avatarUrl = inviteSeed 
+      ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${inviteSeed}&clothing=graphicShirt&accessoriesProbability=0`
+      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${nickname}`
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           nickname,
-          avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${nickname}`,
+          avatar_url: avatarUrl,
+          type: 'real',
         },
       },
     })
@@ -48,12 +87,15 @@ export default function RegisterPage() {
       setError(signUpError.message)
       setLoading(false)
     } else {
+      if (signUpData.user) {
+        migrateMatches(signUpData.user.id)
+      }
       router.push('/login?message=Check your email to confirm your account')
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
+    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tighter text-primary">REJESTRACJA</h1>
@@ -104,7 +146,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="btn-primary w-full py-4 text-lg"
+                  className="btn-primary w-full h-[56px] text-lg"
                 >
                   DALEJ
                   <FastForward className="w-5 h-5" />
@@ -128,17 +170,17 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="flex-1 bg-white/5 text-white font-bold py-4 rounded-xl"
+                    className="flex-1 bg-white/5 text-white font-bold h-[56px] rounded-xl"
                   >
                     WRÓĆ
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn-primary flex-[2] py-4 text-lg"
+                    className="btn-primary flex-[2] h-[56px] text-lg"
                   >
                     {loading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <>
                         <UserPlus className="w-5 h-5" />

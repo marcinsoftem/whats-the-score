@@ -1,12 +1,21 @@
 "use client"
 
-import { Plus, Trophy, Calendar, Users, User as UserIcon, Shield, Check } from "lucide-react";
+import { Plus, Trophy, Calendar, Users, User as UserIcon, Shield, Check, Settings, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { createClient } from "@/lib/supabase/client";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function Home() {
+  return (
+    <AuthGuard>
+      <HomeContent />
+    </AuthGuard>
+  );
+}
+
+function HomeContent() {
   const [matches, setMatches] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -28,36 +37,81 @@ export default function Home() {
 
       // 2. Load Players
       const savedPlayers = localStorage.getItem('wts_players');
-      let playersList = [];
-      if (savedPlayers) {
-        playersList = JSON.parse(savedPlayers);
-      } else {
-        playersList = [
-          { id: 'p1', nickname: 'Marcin', type: 'virtual' },
-          { id: 'p2', nickname: 'Miki', type: 'virtual' },
-          { id: 'p3', nickname: 'Piotr', type: 'virtual' }
-        ];
-        localStorage.setItem('wts_players', JSON.stringify(playersList));
-      }
+      const playersList = savedPlayers ? JSON.parse(savedPlayers) : [];
       
-      // Filter out current user from opponents (by ID or nickname)
-      const opponents = playersList.filter((p: any) => 
-        p.id !== userPlayer.id && 
-        p.nickname.toLowerCase() !== userPlayer.nickname.toLowerCase()
-      );
-      setAvailablePlayers(opponents);
-
       // 3. Load Match History
       const history = localStorage.getItem('wts_match_history');
+      let matchesList = [];
       if (history) {
         try {
-          const parsed = JSON.parse(history);
-          const sorted = parsed.sort((a: any, b: any) => 
+          matchesList = JSON.parse(history);
+          const sorted = [...matchesList].sort((a: any, b: any) => 
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           );
           setMatches(sorted.slice(0, 3));
         } catch (e) {}
       }
+
+      // 4. Load Global Registered Players from Supabase
+      let globalRealPlayers: any[] = [];
+      try {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*');
+        
+        if (!profilesError && profiles) {
+          globalRealPlayers = profiles.map(p => ({
+            id: p.id,
+            nickname: p.nickname || 'Anonim',
+            type: 'real',
+            avatarUrl: p.avatar_url
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching global profiles:', err);
+      }
+
+      // 5. Extract additional real players from match history (backward compatibility)
+      const localRealPlayersMap = new Map();
+      matchesList.forEach((match: any) => {
+        match.players.forEach((p: any) => {
+          if (p.type === 'real' && p.id !== userPlayer.id) {
+            localRealPlayersMap.set(p.id, p);
+          }
+        });
+      });
+
+      // 6. Merge: Global profiles take precedence, then local history, then virtual
+      const allRealPlayersMap = new Map();
+      localRealPlayersMap.forEach((p, id) => allRealPlayersMap.set(id, p));
+      globalRealPlayers.forEach((p) => {
+        if (p.id !== userPlayer.id) {
+          allRealPlayersMap.set(p.id, p);
+        }
+      });
+
+      // 7. Filter out current user from opponents (by ID or nickname)
+      const userNickLower = userPlayer.nickname.trim().toLowerCase();
+      
+      const allPossibleOpponents = [...playersList, ...Array.from(allRealPlayersMap.values())];
+      const opponents = allPossibleOpponents.filter((p: any) => {
+        const pNickLower = p.nickname.trim().toLowerCase();
+        return p.id !== userPlayer.id && pNickLower !== userNickLower;
+      });
+
+      // CLEANUP: If we found a virtual player that matches our current user's nick,
+      // it means we have a duplicate. Remove it from localStorage.
+      if (opponents.length < allPossibleOpponents.length) {
+        const cleanupList = playersList.filter((p: any) => {
+          const pNickLower = p.nickname.trim().toLowerCase();
+          return pNickLower !== userNickLower || p.id === userPlayer.id;
+        });
+        if (cleanupList.length < playersList.length) {
+          localStorage.setItem('wts_players', JSON.stringify(cleanupList));
+        }
+      }
+      
+      setAvailablePlayers(opponents);
       setIsLoaded(true);
     }
     init();
@@ -102,11 +156,20 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center px-1">
             <h2 className="text-sm font-black uppercase tracking-widest text-muted italic">Z kim dzisiaj grasz?</h2>
-            {availablePlayers.length > 0 && (
-              <span className="text-[10px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                {availablePlayers.length} graczy
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {availablePlayers.length > 0 && (
+                <span className="text-[10px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                  {availablePlayers.length} graczy
+                </span>
+              )}
+              <Link 
+                href="/players" 
+                className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+                title="Zarządzaj graczami"
+              >
+                <Users className="w-4 h-4 text-muted" />
+              </Link>
+            </div>
           </div>
           
           <div className="flex gap-4 overflow-x-auto pb-4 px-1 no-scrollbar -mx-4 scroll-px-4">
@@ -131,9 +194,7 @@ export default function Home() {
                     )}
                   </div>
                   {opponentId === player.id && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-background animate-in zoom-in duration-300 shadow-lg">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-background animate-in zoom-in duration-300 shadow-lg" />
                   )}
                 </div>
                 <span className={`text-[10px] font-black uppercase tracking-tighter truncate w-full text-center transition-colors ${
@@ -191,7 +252,7 @@ export default function Home() {
         {matches.length === 0 ? (
           <div className="card flex flex-col gap-4 items-center justify-center py-12 text-center bg-accent/10 border-dashed border-white/10 opacity-50">
             <Trophy className="w-10 h-10 text-muted opacity-20" />
-            <p className="text-muted text-xs font-bold uppercase tracking-widest italic px-8 opacity-50">Nie masz jeszcze żadnych zapisanych meczy.</p>
+            <p className="text-muted text-xs font-bold uppercase tracking-widest italic px-8 opacity-50">Nie masz jeszcze żadnych zapisanych meczów.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -236,25 +297,6 @@ export default function Home() {
         )}
       </section>
 
-      <section className="flex flex-col gap-4 border-t border-white/5 pt-8">
-        <h2 className="text-lg font-black uppercase tracking-tighter italic px-1">Szybki Wybór</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <Link href="/players/new" className="card flex flex-col gap-3 items-start active:scale-95 transition-transform bg-white/5 border-white/5 relative overflow-hidden group">
-            <div className="absolute -right-2 -top-2 w-12 h-12 bg-secondary/10 rounded-full blur-xl group-hover:bg-secondary/20 transition-all" />
-            <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center text-secondary border border-secondary/30">
-              <Plus className="w-6 h-6" />
-            </div>
-            <p className="font-black text-[10px] uppercase tracking-widest">Dodaj Zawodnika</p>
-          </Link>
-          <Link href="/players?filter=virtual" className="card flex flex-col gap-3 items-start active:scale-95 transition-transform bg-white/5 border-white/5 relative overflow-hidden group">
-            <div className="absolute -right-2 -top-2 w-12 h-12 bg-primary/10 rounded-full blur-xl group-hover:bg-primary/20 transition-all" />
-            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary border border-primary/30">
-              <Users className="w-6 h-6" />
-            </div>
-            <p className="font-black text-[10px] uppercase tracking-widest">Wirtualni Gracze</p>
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }

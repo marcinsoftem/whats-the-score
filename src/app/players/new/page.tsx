@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, UserPlus, Loader2, RefreshCcw } from "lucide-react";
+import { ChevronLeft, UserPlus, Loader2, RefreshCcw, Save, Copy, Check, Share2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AddPlayerPage() {
   const [nickname, setNickname] = useState("");
@@ -11,12 +12,65 @@ export default function AddPlayerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  const editId = searchParams.get('id');
 
   useEffect(() => {
-    setAvatarSeed(crypto.randomUUID());
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const standardizedUser = user ? {
+        id: user.id,
+        nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Ty',
+        type: 'real'
+      } : { id: 'anon', nickname: 'Ty', type: 'real' };
+      setCurrentUser(standardizedUser);
+    }
+    getUser();
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted || !currentUser) return;
+    
+    const savedPlayers = localStorage.getItem('wts_players');
+    const players = savedPlayers ? JSON.parse(savedPlayers) : [];
+
+    if (editId) {
+      const player = players.find((p: any) => p.id === editId);
+      
+      // Ownership check: allow if no owner (legacy), if owner is 'anon' (shared on device), or if current user matches
+      const isGuest = currentUser?.id === 'anon';
+      const isOwner = isGuest 
+        ? (!player?.owner_id || player?.owner_id === 'anon')
+        : (player?.owner_id === currentUser.id);
+
+      console.log('--- Edit Authorization Check ---');
+      console.log('Player:', { id: player?.id, nick: player?.nickname, type: player?.type, owner: player?.owner_id });
+      console.log('User:', { id: currentUser?.id, nick: currentUser?.nickname });
+      console.log('Result:', { isOwner });
+
+      if (player && player.type === 'virtual' && isOwner) {
+        setNickname(player.nickname);
+        // Extract seed from URL if possible
+        try {
+          const url = new URL(player.avatarUrl);
+          const seed = url.searchParams.get('seed');
+          if (seed) setAvatarSeed(seed);
+        } catch (e) {}
+        setIsEdit(true);
+      } else if (player) {
+        console.warn('Redirecting: Unauthorized edit attempt');
+        router.push("/");
+      }
+    } else if (!isEdit) {
+      setAvatarSeed(crypto.randomUUID());
+    }
+  }, [editId, mounted, currentUser]);
 
   if (!mounted) return null;
 
@@ -38,27 +92,47 @@ export default function AddPlayerPage() {
     
     setTimeout(() => {
       const savedPlayers = localStorage.getItem('wts_players');
-      const players = savedPlayers ? JSON.parse(savedPlayers) : [];
+      let players = savedPlayers ? JSON.parse(savedPlayers) : [];
       
-      const exists = players.some((p: any) => p.nickname.toLowerCase() === cleanNick.toLowerCase());
+      const cleanNickLower = cleanNick.toLowerCase();
+      const exists = players.some((p: any) => p.nickname.toLowerCase() === cleanNickLower && p.id !== editId);
+      
       if (exists) {
         setError("Gracz o takim nicku już istnieje");
         setLoading(false);
         return;
       }
 
-      const newPlayer = {
-        id: crypto.randomUUID(),
-        nickname: cleanNick,
-        type: 'virtual',
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
-      };
+      if (isEdit) {
+        players = players.map((p: any) => p.id === editId && p.type === 'virtual' ? {
+          ...p,
+          nickname: cleanNick,
+          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
+        } : p);
+      } else {
+        const newPlayer = {
+          id: crypto.randomUUID(),
+          nickname: cleanNick,
+          type: 'virtual',
+          owner_id: currentUser?.id || 'anon',
+          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
+        };
+        players.push(newPlayer);
+      }
 
-      localStorage.setItem('wts_players', JSON.stringify([...players, newPlayer]));
+      localStorage.setItem('wts_players', JSON.stringify(players));
       
       setLoading(false);
       router.push("/");
     }, 500);
+  };
+
+  const handleCopyInvite = () => {
+    const baseUrl = window.location.origin;
+    const inviteUrl = `${baseUrl}/register?invite_id=${editId}&nickname=${encodeURIComponent(nickname)}&seed=${avatarSeed}`;
+    navigator.clipboard.writeText(inviteUrl);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   return (
@@ -139,12 +213,49 @@ export default function AddPlayerPage() {
             <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
             <>
-              <UserPlus className="w-6 h-6" />
-              UTWÓRZ ZAWODNIKA
+              {isEdit ? <Save className="w-6 h-6" /> : <UserPlus className="w-6 h-6" />}
+              {isEdit ? 'ZAPISZ ZMIANY' : 'UTWÓRZ ZAWODNIKA'}
             </>
           )}
         </button>
       </form>
+
+      {isEdit && (
+        <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="p-6 bg-secondary/10 border border-secondary/20 rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+              <Share2 className="w-12 h-12 text-secondary" />
+            </div>
+            
+            <h3 className="text-xs font-black uppercase tracking-widest text-secondary mb-2 italic">Zaproś do aplikacji</h3>
+            <p className="text-[11px] leading-relaxed text-muted font-medium mb-4 pr-12">
+              Chcesz, aby ten zawodnik sam wpisywał wyniki? Wyślij mu ten link, aby mógł utworzyć prawdziwe konto zachowując swoje mecze.
+            </p>
+            
+            <button
+              onClick={handleCopyInvite}
+              className={`w-full py-3 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs transition-all ${
+                copySuccess 
+                  ? 'bg-green-500 border-green-500 text-white' 
+                  : 'bg-white/5 border-white/10 text-white active:scale-95'
+              }`}
+            >
+              {copySuccess ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  SKOPIOWANO!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  KOPIUJ LINK DO REJESTRACJI
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
 
       <div className="p-6 bg-accent/10 border border-white/5 rounded-3xl mt-4">
         <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-2 italic">Dobra rada</h3>

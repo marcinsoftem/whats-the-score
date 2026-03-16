@@ -41,10 +41,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
+    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tighter text-primary">WTS LOGIN</h1>
+          <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
           <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
         </div>
 
@@ -83,10 +83,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-4 text-lg"
+              className="btn-primary w-full h-[56px] text-lg"
             >
               {loading ? (
-                <Loader2 className="w-6 h-6 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
                   <LogIn className="w-5 h-5" />

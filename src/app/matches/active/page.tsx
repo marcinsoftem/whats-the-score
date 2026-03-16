@@ -8,11 +8,7 @@ import { Player } from "@/types";
 import { ChevronLeft, Save, Trash2, Pencil, Calendar } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-// Mock data for demo
-const initialPlayers: Player[] = [
-  { id: '1', nickname: 'Miki', type: 'real' },
-  { id: '2', nickname: 'Marcin', type: 'virtual' }
-];
+// Mock data removed
 
 export default function MatchPage() {
   return (
@@ -51,13 +47,8 @@ function MatchPageContent() {
     if (savedPlayers) {
       playersList = JSON.parse(savedPlayers);
     } else {
-      // Default players if none exist
-      playersList = [
-        { id: 'p1', nickname: 'Miki', type: 'real' },
-        { id: 'p2', nickname: 'Marcin', type: 'virtual' },
-        { id: 'p3', nickname: 'Gracz Testowy', type: 'virtual' }
-      ];
-      localStorage.setItem('wts_players', JSON.stringify(playersList));
+      // Default players list is empty if none exist
+      playersList = [];
     }
     setAvailablePlayers(playersList);
 
