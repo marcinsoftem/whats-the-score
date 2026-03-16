@@ -1,11 +1,11 @@
 "use client"
 
 import AuthGuard from "@/components/auth/AuthGuard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { ScoreCounter } from "@/components/match/ScoreCounter";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { Player } from "@/types";
-import { ChevronLeft, Save, Trash2, Pencil, Calendar } from "lucide-react";
+import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 // Mock data removed
@@ -13,7 +13,13 @@ import { useSearchParams } from "next/navigation";
 export default function MatchPage() {
   return (
     <AuthGuard>
-      <MatchPageContent />
+      <Suspense fallback={
+        <div className="flex items-center justify-center p-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      }>
+        <MatchPageContent />
+      </Suspense>
     </AuthGuard>
   );
 }

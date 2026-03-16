@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { ChevronLeft, UserPlus, Loader2, RefreshCcw, Save, Copy, Check, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function AddPlayerPage() {
+function AddPlayerContent() {
   const [nickname, setNickname] = useState("");
   const [avatarSeed, setAvatarSeed] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,11 +49,6 @@ export default function AddPlayerPage() {
         ? (!player?.owner_id || player?.owner_id === 'anon')
         : (player?.owner_id === currentUser.id);
 
-      console.log('--- Edit Authorization Check ---');
-      console.log('Player:', { id: player?.id, nick: player?.nickname, type: player?.type, owner: player?.owner_id });
-      console.log('User:', { id: currentUser?.id, nick: currentUser?.nickname });
-      console.log('Result:', { isOwner });
-
       if (player && player.type === 'virtual' && isOwner) {
         setNickname(player.nickname);
         // Extract seed from URL if possible
@@ -64,7 +59,6 @@ export default function AddPlayerPage() {
         } catch (e) {}
         setIsEdit(true);
       } else if (player) {
-        console.warn('Redirecting: Unauthorized edit attempt');
         router.push("/");
       }
     } else if (!isEdit) {
@@ -264,5 +258,17 @@ export default function AddPlayerPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AddPlayerPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <AddPlayerContent />
+    </Suspense>
   );
 }
