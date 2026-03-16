@@ -147,9 +147,9 @@ function HomeContent() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-4xl tracking-tighter font-black italic uppercase text-primary">What&apos;s The Score?</h1>
-        <p className="text-muted text-sm font-medium uppercase tracking-widest opacity-70">Przejmij kontrolę nad swoją grą.</p>
+      <header className="text-left">
+        <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
+        <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
       </header>
 
       <section className="flex flex-col gap-6">
