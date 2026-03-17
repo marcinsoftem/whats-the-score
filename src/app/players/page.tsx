@@ -1,7 +1,7 @@
 "use client"
  
 import { useState, useEffect } from "react";
-import { ChevronLeft, UserPlus, Loader2, Pencil, Trash2, AlertTriangle, Shield, CheckCircle2, Search } from "lucide-react";
+import { ChevronLeft, UserPlus, Loader2, Pencil, Trash2, AlertTriangle, Shield, CheckCircle2, Search, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -17,6 +17,7 @@ export default function PlayersPage() {
 
 function PlayersPageContent() {
   const [players, setPlayers] = useState<any[]>([]);
+  const [favIds, setFavIds] = useState<string[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -31,18 +32,27 @@ function PlayersPageContent() {
     async function init() {
       // 1. Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      const standardizedUser = user ? {
+      if (!user) return;
+
+      const standardizedUser = {
         id: user.id,
         nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Ty',
         type: 'real'
-      } : { id: 'anon', nickname: 'Ty', type: 'real' };
+      };
       setCurrentUser(standardizedUser);
 
-      // 2. Fetch all profiles from Supabase
-      // We want: 
-      // - All real players
-      // - Virtual players owned by current user
       try {
+        // 2. Fetch favorites
+        const { data: favorites } = await supabase
+          .from('user_favorites')
+          .select('profile_id')
+          .eq('user_id', user.id);
+        
+        if (favorites) {
+          setFavIds(favorites.map(f => f.profile_id));
+        }
+
+        // 3. Fetch all profiles from Supabase
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*');
@@ -70,7 +80,7 @@ function PlayersPageContent() {
           setPlayers(sortedPlayers);
         }
 
-        // 3. Fetch Matches from Supabase
+        // 4. Fetch Matches from Supabase
         const { data: dbMatches, error: matchesError } = await supabase
           .from('matches')
           .select('*, player1:player1_id(*), player2:player2_id(*)');
@@ -86,6 +96,30 @@ function PlayersPageContent() {
     }
     init();
   }, []);
+
+  const toggleFavorite = async (profileId: string) => {
+    if (!currentUser) return;
+    
+    const isFav = favIds.includes(profileId);
+    
+    try {
+      if (isFav) {
+        await supabase
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', currentUser.id)
+          .eq('profile_id', profileId);
+        setFavIds(prev => prev.filter(id => id !== profileId));
+      } else {
+        await supabase
+          .from('user_favorites')
+          .insert({ user_id: currentUser.id, profile_id: profileId });
+        setFavIds(prev => [...prev, profileId]);
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+    }
+  };
 
   const handleDeleteClick = (player: any) => {
     setDeleteId(player.id);
@@ -202,22 +236,35 @@ function PlayersPageContent() {
                   </div>
                 </div>
 
-                {isVirtual && isOwner && (
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/players/new?id=${player.id}&from=players`}
-                      className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all active:scale-90 border border-white/5"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleDeleteClick(player)}
-                      className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-90 border border-white/5"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleFavorite(player.id)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 border shadow-sm ${
+                      favIds.includes(player.id) 
+                        ? "bg-primary text-background border-primary shadow-primary/20" 
+                        : "bg-white/5 text-muted border-white/10 hover:text-primary hover:bg-white/10 hover:border-primary/30"
+                    }`}
+                  >
+                    <Star className={`w-4 h-4 ${favIds.includes(player.id) ? "fill-current" : ""}`} />
+                  </button>
+
+                  {isVirtual && isOwner && (
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/players/new?id=${player.id}&from=players`}
+                        className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all active:scale-90 border border-white/5"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteClick(player)}
+                        className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-90 border border-white/5"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })
