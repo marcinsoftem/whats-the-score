@@ -44,6 +44,15 @@ function HomeContent() {
       // 2. Load Profiles & Matches from Supabase
       try {
         setError(null);
+
+        // Fetch favorites for this user
+        const { data: favorites } = await supabase
+          .from('user_favorites')
+          .select('profile_id')
+          .eq('user_id', user.id);
+        
+        const favIds = (favorites || []).map(f => f.profile_id);
+
         const { data: profiles, error: pError } = await supabase.from('profiles').select('*');
         
         // Filter by current user
@@ -63,6 +72,10 @@ function HomeContent() {
             .filter(p => {
               const pNickLower = (p.nickname || '').trim().toLowerCase();
               if (p.id === userPlayer.id || pNickLower === userNickLower) return false;
+              
+              // ONLY SHOW FAVORITES ON HOME PAGE
+              if (!favIds.includes(p.id)) return false;
+
               if (p.type === 'real') return true;
               if (p.type === 'virtual' && p.owner_id === userPlayer.id) return true;
               return false;
