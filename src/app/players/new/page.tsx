@@ -4,11 +4,12 @@ import { useState, useEffect, Suspense } from "react";
 import { ChevronLeft, UserPlus, Loader2, RefreshCcw, Save, Copy, Check, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isConfigured } from "@/lib/supabase/client";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 function AddPlayerContent() {
   const [nickname, setNickname] = useState("");
-  const [avatarSeed, setAvatarSeed] = useState("");
+  const [avatarSeed, setAvatarSeed] = useState(() => crypto.randomUUID());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -19,6 +20,8 @@ function AddPlayerContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
   const editId = searchParams.get('id');
+  const from = searchParams.get('from');
+  const backUrl = from === 'players' ? '/players' : '/';
 
   useEffect(() => {
     async function getUser() {
@@ -37,33 +40,47 @@ function AddPlayerContent() {
   useEffect(() => {
     if (!mounted || !currentUser) return;
     
-    const savedPlayers = localStorage.getItem('wts_players');
-    const players = savedPlayers ? JSON.parse(savedPlayers) : [];
+    async function loadPlayer() {
+      if (editId) {
+        const { data: player, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', editId)
+          .single();
 
-    if (editId) {
-      const player = players.find((p: any) => p.id === editId);
-      
-      // Ownership check: allow if no owner (legacy), if owner is 'anon' (shared on device), or if current user matches
-      const isGuest = currentUser?.id === 'anon';
-      const isOwner = isGuest 
-        ? (!player?.owner_id || player?.owner_id === 'anon')
-        : (player?.owner_id === currentUser.id);
+        if (error) {
+          console.error('Error fetching player:', error);
+          router.push("/players");
+          return;
+        }
+        
+        // Ownership check: allow if no owner (legacy), if owner is 'anon' (shared on device), or if current user matches
+        const isGuest = currentUser?.id === 'anon';
+        const isOwner = isGuest 
+          ? (!player?.owner_id || player?.owner_id === 'anon')
+          : (player?.owner_id === currentUser.id);
 
-      if (player && player.type === 'virtual' && isOwner) {
-        setNickname(player.nickname);
-        // Extract seed from URL if possible
-        try {
-          const url = new URL(player.avatarUrl);
-          const seed = url.searchParams.get('seed');
-          if (seed) setAvatarSeed(seed);
-        } catch (e) {}
-        setIsEdit(true);
-      } else if (player) {
-        router.push("/");
+        if (player && player.type === 'virtual' && isOwner) {
+          setNickname(player.nickname);
+          // Extract seed from URL if possible
+          if (player.avatar_url) {
+            try {
+              const url = new URL(player.avatar_url);
+              const seed = url.searchParams.get('seed');
+              if (seed) setAvatarSeed(seed);
+            } catch (e) {
+              // Fallback: if not a URL or search param not found
+              setAvatarSeed(player.nickname);
+            }
+          }
+          setIsEdit(true);
+        } else if (player) {
+          router.push("/players");
+        }
       }
-    } else if (!isEdit) {
-      setAvatarSeed(crypto.randomUUID());
     }
+
+    loadPlayer();
   }, [editId, mounted, currentUser]);
 
   if (!mounted) return null;
@@ -83,42 +100,74 @@ function AddPlayerContent() {
 
     setLoading(true);
     setError(null);
+
+    if (!isConfigured()) {
+      setError("Błąd: Supabase nie jest skonfigurowany. Sprawdź zmienne środowiskowe.");
+      setLoading(false);
+      return;
+    }
     
-    setTimeout(() => {
-      const savedPlayers = localStorage.getItem('wts_players');
-      let players = savedPlayers ? JSON.parse(savedPlayers) : [];
-      
+    if (!currentUser) {
+      setError("Czekam na dane użytkownika...");
+      setLoading(false);
+      return;
+    }
+    async function savePlayer() {
+      const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`;
       const cleanNickLower = cleanNick.toLowerCase();
-      const exists = players.some((p: any) => p.nickname.toLowerCase() === cleanNickLower && p.id !== editId);
-      
-      if (exists) {
-        setError("Gracz o takim nicku już istnieje");
-        setLoading(false);
-        return;
-      }
 
       if (isEdit) {
-        players = players.map((p: any) => p.id === editId && p.type === 'virtual' ? {
-          ...p,
-          nickname: cleanNick,
-          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
-        } : p);
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            nickname: cleanNick,
+            avatar_url: avatarUrl
+          })
+          .eq('id', editId);
+        
+        if (updateError) throw updateError;
       } else {
-        const newPlayer = {
-          id: crypto.randomUUID(),
-          nickname: cleanNick,
-          type: 'virtual',
-          owner_id: currentUser?.id || 'anon',
-          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
-        };
-        players.push(newPlayer);
+        // Check if virtual player with same nick exists for this owner
+        const { data: existing, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('owner_id', currentUser.id === 'anon' ? null : currentUser.id)
+          .ilike('nickname', cleanNick)
+          .maybeSingle();
+
+        if (checkError) {
+          console.error('Error checking existing player:', checkError);
+          // Don't throw here, just log and continue or handle specifically
+        }
+
+        if (existing) {
+          setError("Gracz o takim nicku już istnieje");
+          setLoading(false);
+          return;
+        }
+
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            nickname: cleanNick,
+            type: 'virtual',
+            owner_id: currentUser.id === 'anon' ? null : currentUser.id,
+            avatar_url: avatarUrl,
+            is_claimed: false
+          });
+        
+        if (insertError) throw insertError;
       }
 
-      localStorage.setItem('wts_players', JSON.stringify(players));
-      
       setLoading(false);
-      router.push("/");
-    }, 500);
+      router.push(backUrl);
+    }
+
+    savePlayer().catch(err => {
+      console.error('Error saving player:', err);
+      setError(err?.message || "Błąd zapisu gracza. Upewnij się, że schemat bazy jest poprawny (skrypt w implementation_plan.md).");
+      setLoading(false);
+    });
   };
 
   const handleCopyInvite = () => {
@@ -134,13 +183,13 @@ function AddPlayerContent() {
       <header className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
           <Link 
-            href="/"
+            href={backUrl}
             className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
           >
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
-            DODAJ WIRTUALNEGO ZAWODNIKA
+            STWÓRZ WIRTUALNEGO GRACZA
           </h1>
         </div>
         
@@ -208,7 +257,7 @@ function AddPlayerContent() {
           ) : (
             <>
               {isEdit ? <Save className="w-6 h-6" /> : <UserPlus className="w-6 h-6" />}
-              {isEdit ? 'ZAPISZ ZMIANY' : 'UTWÓRZ ZAWODNIKA'}
+              {isEdit ? 'ZAPISZ ZMIANY' : 'UTWÓRZ GRACZA'}
             </>
           )}
         </button>
@@ -249,26 +298,20 @@ function AddPlayerContent() {
           </div>
         </div>
       )}
-
-
-      <div className="p-6 bg-accent/10 border border-white/5 rounded-3xl mt-4">
-        <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-2 italic">Dobra rada</h3>
-        <p className="text-[11px] leading-relaxed text-muted font-medium">
-          Wirtualni gracze są widoczni tylko na Twoim urządzeniu. Możesz ich używać do szybkich meczy bez potrzeby pełnej rejestracji.
-        </p>
-      </div>
     </div>
   );
 }
 
 export default function AddPlayerPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center p-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    }>
-      <AddPlayerContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={
+        <div className="flex items-center justify-center p-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      }>
+        <AddPlayerContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

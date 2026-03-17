@@ -6,7 +6,8 @@ import { ScoreCounter } from "@/components/match/ScoreCounter";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { Player } from "@/types";
 import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 // Mock data removed
 
@@ -40,97 +41,181 @@ function MatchPageContent() {
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [player1, setPlayer1] = useState<Player | null>(null);
   const [player2, setPlayer2] = useState<Player | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // New match state
   const [matchId, setMatchId] = useState<string>("");
   const [matchDate, setMatchDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
-  // Load players and state from localStorage on mount
-  useEffect(() => {
-    // 1. Load Available Players
-    const savedPlayers = localStorage.getItem('wts_players');
-    let playersList: Player[] = [];
-    if (savedPlayers) {
-      playersList = JSON.parse(savedPlayers);
-    } else {
-      // Default players list is empty if none exist
-      playersList = [];
-    }
-    setAvailablePlayers(playersList);
+  const supabase = createClient();
 
-    // 2. Load Match Data
-    if (editId) {
-      const history = JSON.parse(localStorage.getItem('wts_match_history') || '[]');
-      const matchToEdit = history.find((m: any) => m.id === editId);
-      if (matchToEdit) {
-        setMatchId(matchToEdit.id);
-        setMatchDate(matchToEdit.timestamp.split('T')[0]);
-        setGames(matchToEdit.games || []);
-        setScore1(matchToEdit.score1 || 0);
-        setScore2(matchToEdit.score2 || 0);
-        setPlayer1(matchToEdit.players[0]);
-        setPlayer2(matchToEdit.players[1]);
-        setIsSetup(false); // Go straight to scoring when editing
-      } else {
-        setMatchId(crypto.randomUUID());
-      }
-    } else {
-      const savedMatch = localStorage.getItem('wts_active_match');
-      if (savedMatch) {
-        try {
-          const data = JSON.parse(savedMatch);
-          setScore1(data.score1 || 0);
-          setScore2(data.score2 || 0);
-          setGames(data.games || []);
-          setMatchId(data.matchId || crypto.randomUUID());
-          setMatchDate(data.matchDate || new Date().toISOString().split('T')[0]);
-          setPlayer1(data.player1 || null);
-          setPlayer2(data.player2 || null);
-          if (data.player1 && data.player2) setIsSetup(false);
-        } catch (e) {
-          console.error("Failed to parse saved match", e);
-          setMatchId(crypto.randomUUID());
+  // Load players and state from Supabase on mount
+  useEffect(() => {
+    async function init() {
+      // 1. Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      const standardizedUser = user ? {
+        id: user.id,
+        nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Ty',
+        type: 'real'
+      } : { id: 'anon', nickname: 'Ty', type: 'real' };
+      setCurrentUser(standardizedUser);
+
+      // 2. Fetch all profiles from Supabase
+      try {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*');
+        
+        if (profilesError) throw profilesError;
+
+        if (profiles) {
+          const playersList = profiles
+            .filter((p: any) => {
+              if (p.type === 'real' && p.id !== standardizedUser.id) return true;
+              if (p.type === 'virtual' && p.owner_id === standardizedUser.id) return true;
+              return false;
+            })
+            .map((p: any) => ({
+              id: p.id,
+              nickname: p.nickname || 'Anonim',
+              type: p.type || 'real',
+              avatarUrl: p.avatar_url,
+              owner_id: p.owner_id
+            }));
+          setAvailablePlayers(playersList);
         }
-      } else {
-        setMatchId(crypto.randomUUID());
-        setPlayer1(playersList[0] || null);
-        setPlayer2(playersList[1] || null);
+
+        // 3. Load Match Data
+        if (editId) {
+          const { data: matchToEdit, error: matchError } = await supabase
+            .from('matches')
+            .select('*, match_games(*)')
+            .eq('id', editId)
+            .single();
+
+          if (!matchError && matchToEdit) {
+            setMatchId(matchToEdit.id);
+            setMatchDate(matchToEdit.timestamp.split('T')[0]);
+            const formattedGames = (matchToEdit.match_games || [])
+              .sort((a: any, b: any) => a.game_index - b.game_index)
+              .map((g: any) => ({ p1: g.p1_score, p2: g.p2_score }));
+            
+            // Re-fetch players to ensure we have full objects
+            const { data: p1, error: p1Error } = await supabase.from('profiles').select('*').eq('id', matchToEdit.player1_id).single();
+            const { data: p2, error: p2Error } = await supabase.from('profiles').select('*').eq('id', matchToEdit.player2_id).single();
+            
+            if (p1Error || p2Error || !p1 || !p2) {
+              console.error('Match is orphaned (players deleted). Redirecting...');
+              router.push('/');
+              return;
+            }
+
+            const shouldSwap = p2.id === standardizedUser.id;
+            
+            if (shouldSwap) {
+              setPlayer1(p2 as any);
+              setPlayer2(p1 as any);
+              setGames(formattedGames.map((g: any) => ({ p1: g.p2, p2: g.p1 })));
+            } else {
+              setPlayer1(p1 as any);
+              setPlayer2(p2 as any);
+              setGames(formattedGames);
+            }
+            
+            setScore1(0);
+            setScore2(0);
+            setIsSetup(false);
+          }
+        } else {
+          const savedMatch = localStorage.getItem('wts_active_match');
+          if (savedMatch) {
+            const data = JSON.parse(savedMatch);
+            setScore1(data.score1 || 0);
+            setScore2(data.score2 || 0);
+            setGames(data.games || []);
+            setMatchId(data.matchId || crypto.randomUUID());
+            setMatchDate(data.matchDate || new Date().toISOString().split('T')[0]);
+            setPlayer1(data.player1 || null);
+            setPlayer2(data.player2 || null);
+            if (data.player1 && data.player2) setIsSetup(false);
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing match:', err);
       }
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
+    init();
   }, [editId]);
 
-  // Save state to localStorage whenever it changes
-  useEffect(() => {
-    if (!isLoaded || isSetup) return;
-    
-    const state = { score1, score2, games, matchId, matchDate, player1, player2 };
-    localStorage.setItem('wts_active_match', JSON.stringify(state));
-    
-    // Also update global history whenever games change
-    if (games.length > 0 && player1 && player2) {
-      const history = JSON.parse(localStorage.getItem('wts_match_history') || '[]');
-      const existingMatchIdx = history.findIndex((m: any) => m.id === matchId);
-      
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Save progress to Supabase and localStorage
+  const saveMatchToDb = async () => {
+    if (!isLoaded || isSetup || !player1 || !player2) return;
+
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+      const isSwapped = player1?.id !== currentUser?.id && player2?.id === currentUser?.id;
+
+      // 1. Save main match record
       const matchData = {
         id: matchId,
-        players: [player1, player2],
-        games: games,
+        player1_id: isSwapped ? player2.id : player1.id,
+        player2_id: isSwapped ? player1.id : player2.id,
+        score1: games.filter(g => (isSwapped ? g.p2 > g.p1 : g.p1 > g.p2)).length,
+        score2: games.filter(g => (isSwapped ? g.p1 > g.p2 : g.p2 > g.p1)).length,
         timestamp: new Date(matchDate).toISOString(),
-        score1: score1, 
-        score2: score2,
-        totalGemy1: games.filter(g => g.p1 > g.p2).length,
-        totalGemy2: games.filter(g => g.p2 > g.p1).length,
+        created_by: currentUser?.id === 'anon' || !currentUser?.id ? null : currentUser?.id
       };
 
-      if (existingMatchIdx >= 0) {
-        history[existingMatchIdx] = matchData;
-      } else {
-        history.unshift(matchData);
+      console.log('Saving match to Supabase:', matchData);
+
+      const { error: matchError } = await supabase
+        .from('matches')
+        .upsert(matchData);
+      
+      if (matchError) throw matchError;
+
+      // 2. Save games
+      // First delete existing games for this match to ensure synchronization
+      const { error: delError } = await supabase.from('match_games').delete().eq('match_id', matchId);
+      if (delError) throw delError;
+
+      if (games.length > 0) {
+        const gamesData = games.map((g, i) => ({
+          match_id: matchId,
+          game_index: i,
+          p1_score: isSwapped ? g.p2 : g.p1,
+          p2_score: isSwapped ? g.p1 : g.p2
+        }));
+
+        const { error: gamesError } = await supabase
+          .from('match_games')
+          .insert(gamesData);
+        
+        if (gamesError) throw gamesError;
       }
-      localStorage.setItem('wts_match_history', JSON.stringify(history));
+
+      // 3. Update local storage for temporary persistence
+      const state = { score1, score2, games, matchId, matchDate, player1, player2 };
+      localStorage.setItem('wts_active_match', JSON.stringify(state));
+    } catch (err: any) {
+      console.error('Error saving match to DB:', err);
+      setSaveError(err.message || "Błąd zapisu meczu w chmurze");
+    } finally {
+      setIsSaving(false);
     }
-  }, [score1, score2, games, isLoaded, matchId, matchDate, player1, player2, isSetup]);
+  };
+
+  useEffect(() => {
+    if (isLoaded && !isSetup) {
+      saveMatchToDb();
+    }
+  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser]);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
@@ -187,12 +272,16 @@ function MatchPageContent() {
     setScore2(0);
   };
 
+  const router = useRouter();
+
   const handleGoBack = () => {
     // Clear active match if we were editing specific one
     if (editId) {
       localStorage.removeItem('wts_active_match');
     }
-    window.location.href = "/";
+    const from = searchParams.get('from');
+    const backUrl = from === 'players' ? '/players' : '/';
+    router.push(backUrl);
   };
 
   if (!isLoaded) return null;
@@ -228,6 +317,19 @@ function MatchPageContent() {
         </div>
       </header>
 
+      {saveError && (
+        <div className="bg-secondary/10 border border-secondary/20 p-3 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
+          <span className="text-[10px] font-black uppercase text-secondary italic">Błąd synchronizacji: {saveError}</span>
+        </div>
+      )}
+
+      {isSaving && !saveError && (
+        <div className="bg-primary/10 border border-primary/20 p-2 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
+          <Loader2 className="w-3 h-3 animate-spin text-primary" />
+          <span className="text-[9px] font-black uppercase text-primary italic">Synchronizowanie z chmurą...</span>
+        </div>
+      )}
+
       <div className="flex justify-between items-center bg-accent/30 p-4 rounded-3xl border border-white/5 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-primary">{p1Games}</span>
@@ -250,7 +352,12 @@ function MatchPageContent() {
             onClick={() => { setScore1(11); setScore2(7); }}
             className="text-left active:scale-95 transition-transform"
           >
-            <PlayerCard player={player1!} color="primary" className="bg-transparent border-none p-0" />
+            <PlayerCard 
+              player={player1!} 
+              color="primary" 
+              className="bg-transparent border-none p-0" 
+              isMe={player1?.id === currentUser?.id}
+            />
           </button>
           <ScoreCounter label="Twój Wynik" value={score1} onChange={setScore1} color="primary" />
         </div>
@@ -260,7 +367,13 @@ function MatchPageContent() {
             onClick={() => { setScore1(7); setScore2(11); }}
             className="text-right active:scale-95 transition-transform"
           >
-            <PlayerCard player={player2!} color="secondary" className="bg-transparent border-none p-0" alignRight />
+            <PlayerCard 
+              player={player2!} 
+              color="secondary" 
+              className="bg-transparent border-none p-0" 
+              isMe={player2?.id === currentUser?.id}
+              alignRight 
+            />
           </button>
           <ScoreCounter label="Przeciwnik" value={score2} onChange={setScore2} color="secondary" />
         </div>

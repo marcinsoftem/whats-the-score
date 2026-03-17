@@ -5,8 +5,17 @@ import { ChevronLeft, UserPlus, Loader2, Pencil, Trash2, AlertTriangle, Shield, 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function PlayersPage() {
+  return (
+    <AuthGuard>
+      <PlayersPageContent />
+    </AuthGuard>
+  );
+}
+
+function PlayersPageContent() {
   const [players, setPlayers] = useState<any[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -29,61 +38,49 @@ export default function PlayersPage() {
       } : { id: 'anon', nickname: 'Ty', type: 'real' };
       setCurrentUser(standardizedUser);
 
-      // 2. Load Virtual Players
-      const savedPlayers = localStorage.getItem('wts_players');
-      const virtualPlayers = savedPlayers ? JSON.parse(savedPlayers) : [];
-      
-      // 3. Load Match History (to find players played with historically)
-      const history = localStorage.getItem('wts_match_history');
-      const matchesList = history ? JSON.parse(history) : [];
-      setMatches(matchesList);
-
-      // 4. Load Global Registered Players from Supabase
-      let globalRealPlayers: any[] = [];
+      // 2. Fetch all profiles from Supabase
+      // We want: 
+      // - All real players
+      // - Virtual players owned by current user
       try {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*');
         
-        if (!profilesError && profiles) {
-          globalRealPlayers = profiles.map(p => ({
-            id: p.id,
-            nickname: p.nickname || 'Anonim',
-            type: 'real',
-            avatarUrl: p.avatar_url
-          }));
+        if (profilesError) throw profilesError;
+
+        if (profiles) {
+          const allPlayers = profiles
+            .filter(p => {
+              if (p.type === 'real' && p.id !== standardizedUser.id) return true;
+              if (p.type === 'virtual' && p.owner_id === standardizedUser.id) return true;
+              return false;
+            })
+            .map(p => ({
+              id: p.id,
+              nickname: p.nickname || 'Anonim',
+              type: p.type || 'real',
+              avatarUrl: p.avatar_url,
+              owner_id: p.owner_id
+            }));
+
+          const sortedPlayers = allPlayers.sort((a: any, b: any) => 
+            a.nickname.localeCompare(b.nickname)
+          );
+          setPlayers(sortedPlayers);
+        }
+
+        // 3. Fetch Matches from Supabase
+        const { data: dbMatches, error: matchesError } = await supabase
+          .from('matches')
+          .select('*, player1:player1_id(*), player2:player2_id(*)');
+        
+        if (!matchesError && dbMatches) {
+          setMatches(dbMatches);
         }
       } catch (err) {
-        console.error('Error fetching global profiles:', err);
+        console.error('Error fetching data:', err);
       }
-
-      // 5. Extract additional real players from match history (backward compatibility)
-      const localRealPlayersMap = new Map();
-      matchesList.forEach((match: any) => {
-        match.players.forEach((p: any) => {
-          if (p.type === 'real' && p.id !== standardizedUser.id) {
-            localRealPlayersMap.set(p.id, p);
-          }
-        });
-      });
-
-      // 6. Merge: Global profiles take precedence, then local history, then virtual
-      const allRealPlayersMap = new Map();
-      
-      // Add local ones first
-      localRealPlayersMap.forEach((p, id) => allRealPlayersMap.set(id, p));
-      // Overwrite with global ones (more up-to-date)
-      globalRealPlayers.forEach((p) => {
-        if (p.id !== standardizedUser.id) {
-          allRealPlayersMap.set(p.id, p);
-        }
-      });
-
-      const allPlayers = [...virtualPlayers, ...Array.from(allRealPlayersMap.values())];
-      const sortedPlayers = allPlayers.sort((a: any, b: any) => 
-        a.nickname.localeCompare(b.nickname)
-      );
-      setPlayers(sortedPlayers);
 
       setIsLoaded(true);
     }
@@ -93,24 +90,34 @@ export default function PlayersPage() {
   const handleDeleteClick = (player: any) => {
     setDeleteId(player.id);
     
-    // Check if player has match history
+    // Check if player has match history in the fetched matches
     const historyFound = matches.some(match => 
-      match.players.some((p: any) => p.id === player.id)
+      match.player1_id === player.id || match.player2_id === player.id
     );
     
     setHasHistory(historyFound);
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteId) return;
 
-    const updatedPlayers = players.filter(p => p.id !== deleteId);
-    localStorage.setItem('wts_players', JSON.stringify(updatedPlayers));
-    setPlayers(updatedPlayers);
-    
-    setShowDeleteConfirm(false);
-    setDeleteId(null);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', deleteId);
+      
+      if (error) throw error;
+
+      setPlayers(prev => prev.filter(p => p.id !== deleteId));
+    } catch (err: any) {
+      console.error('Error deleting player:', err);
+      alert("Błąd usuwania gracza: " + (err.message || "Błąd RLS lub kluczy obcych. Sprawdź nowe instrukcje w implementation_plan.md"));
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeleteId(null);
+    }
   };
 
   const filteredPlayers = players.filter(p => 
@@ -159,7 +166,7 @@ export default function PlayersPage() {
             // If guest: allow if no owner or 'anon'.
             const isGuest = currentUser?.id === 'anon';
             const isOwner = isGuest 
-              ? (!player.owner_id || player.owner_id === 'anon')
+              ? (!player.owner_id || player.owner_id === 'anon') // Check both for safety
               : (player.owner_id === currentUser.id);
             
             const isVirtual = player.type === 'virtual';
@@ -198,7 +205,7 @@ export default function PlayersPage() {
                 {isVirtual && isOwner && (
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/players/new?id=${player.id}`}
+                      href={`/players/new?id=${player.id}&from=players`}
                       className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all active:scale-90 border border-white/5"
                     >
                       <Pencil className="w-4 h-4" />
@@ -219,7 +226,7 @@ export default function PlayersPage() {
 
       <div className="mt-8">
         <Link 
-          href="/players/new"
+          href="/players/new?from=players"
           className="btn-primary w-full py-6 text-xl shadow-[0_10px_30px_rgba(198,255,0,0.2)] flex items-center justify-center gap-3"
         >
           <UserPlus className="w-6 h-6" />

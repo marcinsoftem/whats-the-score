@@ -1,8 +1,10 @@
 "use client"
 
-import { Plus, Trophy, Calendar, Users, User as UserIcon, Shield, Check, Settings, Pencil } from "lucide-react";
+import { Plus, Trophy, Calendar, Users, User as UserIcon, Shield, Check, Settings, Pencil, Loader2, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { createClient } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -16,8 +18,10 @@ export default function Home() {
 }
 
 function HomeContent() {
+  const router = useRouter();
   const [matches, setMatches] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [availablePlayers, setAvailablePlayers] = useState<any[]>([]);
   const [opponentId, setOpponentId] = useState<string>("");
@@ -27,95 +31,101 @@ function HomeContent() {
     async function init() {
       // 1. Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      const userPlayer = user ? {
+      if (!user) return;
+      
+      const userPlayer = {
         id: user.id,
         nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Ty',
         type: 'real',
         avatarUrl: user.user_metadata?.avatar_url
-      } : { id: 'anon', nickname: 'Ty', type: 'real' };
+      };
       setCurrentUser(userPlayer);
 
-      // 2. Load Players
-      const savedPlayers = localStorage.getItem('wts_players');
-      const playersList = savedPlayers ? JSON.parse(savedPlayers) : [];
-      
-      // 3. Load Match History
-      const history = localStorage.getItem('wts_match_history');
-      let matchesList = [];
-      if (history) {
-        try {
-          matchesList = JSON.parse(history);
-          const sorted = [...matchesList].sort((a: any, b: any) => 
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          );
-          setMatches(sorted.slice(0, 3));
-        } catch (e) {}
-      }
-
-      // 4. Load Global Registered Players from Supabase
-      let globalRealPlayers: any[] = [];
+      // 2. Load Profiles & Matches from Supabase
       try {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*');
+        setError(null);
+        const { data: profiles, error: pError } = await supabase.from('profiles').select('*');
         
-        if (!profilesError && profiles) {
-          globalRealPlayers = profiles.map(p => ({
-            id: p.id,
-            nickname: p.nickname || 'Anonim',
-            type: 'real',
-            avatarUrl: p.avatar_url
-          }));
+        // Filter by current user
+        const { data: dbMatches, error: mError } = await supabase
+          .from('matches')
+          .select('*, player1:player1_id(*), player2:player2_id(*), match_games(*)')
+          .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
+          .order('timestamp', { ascending: false })
+          .limit(10);
+
+        if (pError) throw pError;
+        if (mError) throw mError;
+
+        if (profiles) {
+          const userNickLower = userPlayer.nickname.trim().toLowerCase();
+          const opponents = profiles
+            .filter(p => {
+              const pNickLower = (p.nickname || '').trim().toLowerCase();
+              if (p.id === userPlayer.id || pNickLower === userNickLower) return false;
+              if (p.type === 'real') return true;
+              if (p.type === 'virtual' && p.owner_id === userPlayer.id) return true;
+              return false;
+            })
+            .map(p => ({
+              id: p.id,
+              nickname: p.nickname || 'Anonim',
+              type: p.type || 'real',
+              avatarUrl: p.avatar_url
+            }));
+          setAvailablePlayers(opponents);
         }
-      } catch (err) {
-        console.error('Error fetching global profiles:', err);
+
+        if (dbMatches) {
+          const formattedMatches = dbMatches
+            .map(m => {
+              const shouldSwap = m.player2_id === user.id;
+              
+              const games = (m.match_games || [])
+                .sort((a: any, b: any) => a.game_index - b.game_index)
+                .map((g: any) => ({ 
+                  p1: shouldSwap ? g.p2_score : g.p1_score, 
+                  p2: shouldSwap ? g.p1_score : g.p2_score 
+                }));
+              
+              return {
+                id: m.id,
+                timestamp: m.timestamp,
+                score1: shouldSwap ? m.score2 : m.score1,
+                score2: shouldSwap ? m.score1 : m.score2,
+                players: shouldSwap ? [
+                  { id: m.player2?.id, nickname: m.player2?.nickname, avatarUrl: m.player2?.avatar_url, type: m.player2?.type },
+                  { id: m.player1?.id, nickname: m.player1?.nickname, avatarUrl: m.player1?.avatar_url, type: m.player1?.type }
+                ] : [
+                  { id: m.player1?.id, nickname: m.player1?.nickname, avatarUrl: m.player1?.avatar_url, type: m.player1?.type },
+                  { id: m.player2?.id, nickname: m.player2?.nickname, avatarUrl: m.player2?.avatar_url, type: m.player2?.type }
+                ],
+                games: games
+              };
+            })
+            .filter(m => m.players[0].nickname && m.players[1].nickname);
+          setMatches(formattedMatches);
+        }
+      } catch (err: any) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err.message || "Błąd pobierania danych z bazy");
       }
 
-      // 5. Extract additional real players from match history (backward compatibility)
-      const localRealPlayersMap = new Map();
-      matchesList.forEach((match: any) => {
-        match.players.forEach((p: any) => {
-          if (p.type === 'real' && p.id !== userPlayer.id) {
-            localRealPlayersMap.set(p.id, p);
-          }
-        });
-      });
-
-      // 6. Merge: Global profiles take precedence, then local history, then virtual
-      const allRealPlayersMap = new Map();
-      localRealPlayersMap.forEach((p, id) => allRealPlayersMap.set(id, p));
-      globalRealPlayers.forEach((p) => {
-        if (p.id !== userPlayer.id) {
-          allRealPlayersMap.set(p.id, p);
-        }
-      });
-
-      // 7. Filter out current user from opponents (by ID or nickname)
-      const userNickLower = userPlayer.nickname.trim().toLowerCase();
-      
-      const allPossibleOpponents = [...playersList, ...Array.from(allRealPlayersMap.values())];
-      const opponents = allPossibleOpponents.filter((p: any) => {
-        const pNickLower = p.nickname.trim().toLowerCase();
-        return p.id !== userPlayer.id && pNickLower !== userNickLower;
-      });
-
-      // CLEANUP: If we found a virtual player that matches our current user's nick,
-      // it means we have a duplicate. Remove it from localStorage.
-      if (opponents.length < allPossibleOpponents.length) {
-        const cleanupList = playersList.filter((p: any) => {
-          const pNickLower = p.nickname.trim().toLowerCase();
-          return pNickLower !== userNickLower || p.id === userPlayer.id;
-        });
-        if (cleanupList.length < playersList.length) {
-          localStorage.setItem('wts_players', JSON.stringify(cleanupList));
-        }
-      }
-      
-      setAvailablePlayers(opponents);
       setIsLoaded(true);
     }
     init();
   }, []);
+
+  const handleDeleteMatch = async (matchId: string) => {
+    try {
+      const { error } = await supabase.from('matches').delete().eq('id', matchId);
+      if (error) throw error;
+      setMatches(prev => prev.filter(m => m.id !== matchId));
+    } catch (err) {
+      console.error('Error deleting match:', err);
+      alert('Nie udało się usunąć meczu');
+    }
+  };
 
   const handleNewMatch = () => {
     const opponent = availablePlayers.find(p => p.id === opponentId);
@@ -132,7 +142,7 @@ function HomeContent() {
       player2: opponent
     };
     localStorage.setItem('wts_active_match', JSON.stringify(newState));
-    window.location.href = "/matches/active";
+    router.push("/matches/active");
   };
 
   const formatDate = (isoString: string) => {
@@ -151,6 +161,13 @@ function HomeContent() {
         <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
         <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
       </header>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex flex-col gap-1 items-center justify-center text-center">
+            <span className="text-xs font-black uppercase text-red-500 italic">Błąd połączenia z bazą</span>
+            <p className="text-[10px] text-red-500/70">{error}</p>
+        </div>
+      )}
 
       <section className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
@@ -206,7 +223,7 @@ function HomeContent() {
             ))}
             
             <Link 
-              href="/players/new"
+              href="/players/new?from=home"
               className="flex flex-col items-center gap-3 min-w-[70px] opacity-40 hover:opacity-100 transition-opacity"
             >
               <div className="w-14 h-14 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 group hover:border-primary transition-colors">
@@ -219,7 +236,7 @@ function HomeContent() {
 
         {currentUser && opponentId && (
           <div className="flex items-center justify-center gap-3 mb-4 animate-in slide-in-from-top-2 duration-500">
-            <span className="text-[14px] font-black uppercase tracking-widest text-primary italic">{currentUser.nickname}</span>
+            <span className="text-[14px] font-black uppercase tracking-widest text-primary italic">Ja</span>
             <span className="text-[12px] font-black text-muted opacity-30 italic">VS</span>
             <span className="text-[14px] font-black uppercase tracking-widest text-secondary italic">
               {availablePlayers.find(p => p.id === opponentId)?.nickname}
@@ -256,43 +273,74 @@ function HomeContent() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {matches.map((match, idx) => (
-              <Link href={`/matches/active?id=${match.id}`} key={match.id || idx} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3">
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted shrink-0 w-10">
-                  {formatDate(match.timestamp)}
-                </span>
-                
-                <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">{match.players[0].nickname}</span>
-                    <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
-                      {match.players[0].avatarUrl ? (
-                        <img src={match.players[0].avatarUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        match.players[0].nickname[0].toUpperCase()
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="text-lg font-black font-barlow-condensed tracking-tighter flex items-center gap-1 shrink-0">
-                    <span className="text-primary">{match.totalGemy1}</span>
-                    <span className="opacity-20 text-xs">:</span>
-                    <span className="text-secondary">{match.totalGemy2}</span>
+            <AnimatePresence initial={false}>
+              {matches.map((match, idx) => (
+                <motion.div 
+                  key={match.id || idx}
+                  layout
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 100 }}
+                  className="relative group"
+                >
+                  {/* Delete Background */}
+                  <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center pl-6 text-white overflow-hidden">
+                    <Trash2 className="w-5 h-5 animate-pulse" />
                   </div>
 
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[9px] font-black text-secondary overflow-hidden shrink-0">
-                      {match.players[1].avatarUrl ? (
-                        <img src={match.players[1].avatarUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        match.players[1].nickname[0].toUpperCase()
-                      )}
-                    </div>
-                    <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">{match.players[1].nickname}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                  <motion.div
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 100 }}
+                    onDragEnd={(_, info) => {
+                      if (info.offset.x > 80) {
+                        handleDeleteMatch(match.id);
+                      }
+                    }}
+                    className="relative z-10"
+                  >
+                    <Link href={`/matches/active?id=${match.id}`} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted shrink-0 w-10">
+                        {formatDate(match.timestamp)}
+                      </span>
+                      
+                      <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">
+                            {match.players[0].id === currentUser?.id ? 'Ja' : match.players[0].nickname}
+                          </span>
+                          <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
+                            {match.players[0].avatarUrl ? (
+                              <img src={match.players[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              (match.players[0].nickname?.[0] || '?').toUpperCase()
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="text-lg font-black font-barlow-condensed tracking-tighter flex items-center gap-1 shrink-0">
+                          <span className="text-primary">{match.score1}</span>
+                          <span className="opacity-20 text-xs">:</span>
+                          <span className="text-secondary">{match.score2}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[9px] font-black text-secondary overflow-hidden shrink-0">
+                            {match.players[1].avatarUrl ? (
+                              <img src={match.players[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              (match.players[1].nickname?.[0] || '?').toUpperCase()
+                            )}
+                          </div>
+                          <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">
+                            {match.players[1].id === currentUser?.id ? 'Ja' : match.players[1].nickname}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </section>

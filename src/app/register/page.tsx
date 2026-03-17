@@ -11,6 +11,7 @@ function RegisterContent() {
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
   const [step, setStep] = useState(1)
+  const [avatarSeed, setAvatarSeed] = useState(() => crypto.randomUUID())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -23,32 +24,10 @@ function RegisterContent() {
 
   useEffect(() => {
     if (inviteNickname) setNickname(inviteNickname)
-  }, [inviteNickname])
+    if (inviteSeed) setAvatarSeed(inviteSeed)
+  }, [inviteNickname, inviteSeed])
 
-  const migrateMatches = (newUserId: string) => {
-    if (!inviteId) return
-
-    // 1. Migrate match history
-    const history = localStorage.getItem('wts_match_history')
-    if (history) {
-      const matches = JSON.parse(history)
-      const updatedMatches = matches.map((match: any) => {
-        const updatedPlayers = match.players.map((p: any) => 
-          p.id === inviteId ? { ...p, id: newUserId, type: 'real' } : p
-        )
-        return { ...match, players: updatedPlayers }
-      })
-      localStorage.setItem('wts_match_history', JSON.stringify(updatedMatches))
-    }
-
-    // 2. Remove from virtual players list
-    const savedPlayers = localStorage.getItem('wts_players')
-    if (savedPlayers) {
-      const players = JSON.parse(savedPlayers)
-      const filteredPlayers = players.filter((p: any) => p.id !== inviteId)
-      localStorage.setItem('wts_players', JSON.stringify(filteredPlayers))
-    }
-  }
+  // migrateMatches function removed - now handled by DB trigger handle_new_user with invite_id
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,29 +46,30 @@ function RegisterContent() {
       return
     }
 
-    const avatarUrl = inviteSeed 
-      ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${inviteSeed}&clothing=graphicShirt&accessoriesProbability=0`
-      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${nickname}`
+    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           nickname,
           avatar_url: avatarUrl,
           type: 'real',
+          invite_id: inviteId, // Passed to DB trigger for automated claiming
         },
       },
     })
 
     if (signUpError) {
-      setError(signUpError.message)
+      if (signUpError.message.includes('rate limit')) {
+        setError('Osiągnięto limit wysyłki e-maili. Odczekaj chwilę lub poproś administratora o wyłączenie potwierdzania e-maili w Supabase.')
+      } else {
+        setError(signUpError.message)
+      }
       setLoading(false)
     } else {
-      if (signUpData.user) {
-        migrateMatches(signUpData.user.id)
-      }
       router.push('/login?message=Check your email to confirm your account')
     }
   }
@@ -98,19 +78,19 @@ function RegisterContent() {
     <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tighter text-primary">REJESTRACJA</h1>
-          <p className="text-muted mt-2">Dołącz do społeczności WTS</p>
+          <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
+          <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
         </div>
 
-        <div className="card shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+        <div className="card shadow-2xl relative overflow-hidden min-h-[360px] flex flex-col justify-center p-6">
+          <div className="absolute top-0 left-0 w-full h-1">
             <div 
               className="h-full bg-primary transition-all duration-500" 
               style={{ width: `${step === 1 ? '50%' : '100%'}` }}
             />
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-6 pt-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
                 {error}
@@ -154,6 +134,27 @@ function RegisterContent() {
               </>
             ) : (
               <>
+                <div className="flex flex-col items-center gap-2 mb-4">
+                  <button 
+                    type="button"
+                    onClick={() => setAvatarSeed(crypto.randomUUID())}
+                    className="group relative"
+                  >
+                    <div className="w-24 h-24 rounded-full bg-accent/20 border-2 border-white/5 mx-auto flex items-center justify-center relative overflow-hidden ring-4 ring-primary/10 transition-all duration-300 group-hover:ring-primary/30 group-active:scale-95">
+                      <img 
+                        key={avatarSeed}
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`} 
+                        alt="Avatar preview" 
+                        className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" 
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      </div>
+                    </div>
+                  </button>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">KLIKNIJ ABY WYLOSOWAĆ</p>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted uppercase tracking-wider">Pseudonim</label>
                   <input

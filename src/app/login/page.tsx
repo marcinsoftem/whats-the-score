@@ -48,8 +48,8 @@ export default function LoginPage() {
           <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
         </div>
 
-        <div className="card shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-6">
+        <div className="card shadow-2xl min-h-[360px] flex flex-col justify-center p-6">
+          <form onSubmit={handleLogin} className="space-y-4">
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
                 {error}

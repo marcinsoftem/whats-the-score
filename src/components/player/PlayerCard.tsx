@@ -7,9 +7,10 @@ interface PlayerCardProps {
   className?: string;
   alignRight?: boolean;
   color?: "primary" | "secondary";
+  isMe?: boolean;
 }
 
-export function PlayerCard({ player, className, alignRight, color = "primary" }: PlayerCardProps) {
+export function PlayerCard({ player, className, alignRight, color = "primary", isMe }: PlayerCardProps) {
   // We specify colors based on props, typically primary for P1 and secondary for P2
   const borderColorClass = color === "primary" ? "border-primary" : "border-secondary";
   const bgColorClass = color === "primary" ? "bg-primary/10" : "bg-secondary/10";
@@ -35,7 +36,7 @@ export function PlayerCard({ player, className, alignRight, color = "primary" }:
             "font-extrabold text-xl leading-none uppercase tracking-tighter truncate",
             textColorClass
           )}>
-            {player.nickname}
+            {isMe ? 'Ja' : player.nickname}
           </p>
         </div>
         <p className="text-muted text-[9px] mt-1 uppercase tracking-[0.2em] font-black opacity-40 leading-tight">
