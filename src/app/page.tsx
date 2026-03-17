@@ -192,13 +192,6 @@ function HomeContent() {
                   {availablePlayers.length} graczy
                 </span>
               )}
-              <Link 
-                href="/players" 
-                className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-                title="Zarządzaj graczami"
-              >
-                <Users className="w-4 h-4 text-muted" />
-              </Link>
             </div>
           </div>
           

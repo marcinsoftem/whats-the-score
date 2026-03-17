@@ -146,7 +146,7 @@ function AddPlayerContent() {
           return;
         }
 
-        const { error: insertError } = await supabase
+        const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
             nickname: cleanNick,
@@ -154,9 +154,21 @@ function AddPlayerContent() {
             owner_id: currentUser.id === 'anon' ? null : currentUser.id,
             avatar_url: avatarUrl,
             is_claimed: false
-          });
+          })
+          .select()
+          .single();
         
         if (insertError) throw insertError;
+
+        // Auto-favorite the new player
+        if (newProfile && currentUser.id !== 'anon') {
+          await supabase
+            .from('user_favorites')
+            .insert({
+              user_id: currentUser.id,
+              profile_id: newProfile.id
+            });
+        }
       }
 
       setLoading(false);
