@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { createClient, isConfigured } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogIn, Loader2 } from 'lucide-react'
+import { LogIn, Loader2, Globe } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function LoginPage() {
+  const { t, language, setLanguage } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,7 +23,7 @@ export default function LoginPage() {
 
     // Check if Supabase is configured
     if (!isConfigured()) {
-      setError('Błąd konfiguracji Supabase. Na Vercel upewnij się, że masz dodane zmienne NEXT_PUBLIC_SUPABASE_URL oraz NEXT_PUBLIC_SUPABASE_ANON_KEY (z przedrostkiem NEXT_PUBLIC_).')
+      setError(t.auth.emailConfigError)
       setLoading(false)
       return
     }
@@ -44,8 +46,8 @@ export default function LoginPage() {
     <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
-          <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
+          <h1 className="text-4xl font-bold italic tracking-tighter text-primary">{t.home.title}</h1>
+          <p className="text-muted mt-2">{t.home.subtitle}</p>
         </div>
 
         <div className="card shadow-2xl min-h-[360px] flex flex-col justify-center p-6">
@@ -57,7 +59,7 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted uppercase tracking-wider">Email</label>
+              <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.email}</label>
               <input
                 type="email"
                 required
@@ -69,7 +71,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted uppercase tracking-wider">Hasło</label>
+              <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.password}</label>
               <input
                 type="password"
                 required
@@ -90,7 +92,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <LogIn className="w-5 h-5" />
-                  ZALOGUJ SIĘ
+                  {t.auth.signInButton}
                 </>
               )}
             </button>
@@ -98,11 +100,21 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-muted">
-          Nie masz konta?{' '}
+          {t.auth.noAccount}{' '}
           <Link href="/register" className="text-secondary font-bold hover:underline">
-            ZAREJESTRUJ SIĘ
+            {t.auth.signUp.toUpperCase()}
           </Link>
         </p>
+
+        <div className="flex justify-center mt-4 text-center">
+          <button 
+            onClick={() => setLanguage(language === 'pl' ? 'en' : 'pl')}
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 hover:bg-primary/20 transition-all italic mx-auto"
+          >
+            <Globe className="w-3 h-3" />
+            {language === 'pl' ? 'English (EN)' : 'Polski (PL)'}
+          </button>
+        </div>
       </div>
     </div>
   )

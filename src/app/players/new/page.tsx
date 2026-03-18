@@ -6,8 +6,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient, isConfigured } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function AddPlayerContent() {
+  const { t } = useLanguage();
   const [nickname, setNickname] = useState("");
   const [avatarSeed, setAvatarSeed] = useState(() => crypto.randomUUID());
   const [loading, setLoading] = useState(false);
@@ -94,7 +96,7 @@ function AddPlayerContent() {
     const cleanNick = nickname.trim();
     if (!cleanNick) return;
     if (cleanNick.length > 10) {
-      setError("Nick może mieć max 10 znaków");
+      setError(t.players.nicknameCharLimit);
       return;
     }
 
@@ -102,13 +104,13 @@ function AddPlayerContent() {
     setError(null);
 
     if (!isConfigured()) {
-      setError("Błąd: Supabase nie jest skonfigurowany. Sprawdź zmienne środowiskowe.");
+      setError(t.players.supabaseConfigError);
       setLoading(false);
       return;
     }
     
     if (!currentUser) {
-      setError("Czekam na dane użytkownika...");
+      setError(t.players.waitingForUserData);
       setLoading(false);
       return;
     }
@@ -141,7 +143,7 @@ function AddPlayerContent() {
         }
 
         if (existing) {
-          setError("Gracz o takim nicku już istnieje");
+          setError(t.players.alreadyExists);
           setLoading(false);
           return;
         }
@@ -177,7 +179,7 @@ function AddPlayerContent() {
 
     savePlayer().catch(err => {
       console.error('Error saving player:', err);
-      setError(err?.message || "Błąd zapisu gracza. Upewnij się, że schemat bazy jest poprawny (skrypt w implementation_plan.md).");
+      setError(err?.message || t.players.saveError);
       setLoading(false);
     });
   };
@@ -201,7 +203,7 @@ function AddPlayerContent() {
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
-            STWÓRZ WIRTUALNEGO GRACZA
+            {t.players.createVirtualTitle}
           </h1>
         </div>
         
@@ -226,7 +228,7 @@ function AddPlayerContent() {
           </button>
           
           <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">KLIKNIJ, ABY WYLOSOWAĆ</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">{t.players.clickToRandomize}</p>
           </div>
         </div>
       </header>
@@ -234,7 +236,7 @@ function AddPlayerContent() {
       <form onSubmit={handleAddPlayer} className="flex flex-col gap-6 px-1">
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center px-1">
-            <label className="text-[10px] uppercase font-black tracking-widest text-muted italic">Pseudonim</label>
+            <label className="text-[10px] uppercase font-black tracking-widest text-muted italic">{t.players.nickname}</label>
             <span className={`text-[10px] font-black ${nickname.length > 10 ? 'text-secondary' : 'text-muted/40'}`}>
               {nickname.length}/10
             </span>
@@ -247,7 +249,7 @@ function AddPlayerContent() {
             className={`w-full bg-white/5 border rounded-2xl p-4 text-lg font-bold text-foreground outline-none transition-all placeholder:text-muted/20 ${
               error ? 'border-secondary/50 bg-secondary/5' : 'border-white/10 focus:border-primary/50'
             }`}
-            placeholder="Wpisz pseudonim..."
+            placeholder={t.players.nickname + "..."}
             value={nickname}
             onChange={(e) => {
               setNickname(e.target.value);
@@ -269,7 +271,7 @@ function AddPlayerContent() {
           ) : (
             <>
               {isEdit ? <Save className="w-6 h-6" /> : <UserPlus className="w-6 h-6" />}
-              {isEdit ? 'ZAPISZ ZMIANY' : 'UTWÓRZ GRACZA'}
+              {isEdit ? t.players.saveChanges : t.players.createPlayer}
             </>
           )}
         </button>
@@ -282,9 +284,9 @@ function AddPlayerContent() {
               <Share2 className="w-12 h-12 text-secondary" />
             </div>
             
-            <h3 className="text-xs font-black uppercase tracking-widest text-secondary mb-2 italic">Zaproś do aplikacji</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-secondary mb-2 italic">{t.players.inviteTitle}</h3>
             <p className="text-[11px] leading-relaxed text-muted font-medium mb-4 pr-12">
-              Chcesz, aby ten zawodnik sam wpisywał wyniki? Wyślij mu ten link, aby mógł utworzyć prawdziwe konto zachowując swoje mecze.
+              {t.players.inviteDesc}
             </p>
             
             <button
@@ -298,12 +300,12 @@ function AddPlayerContent() {
               {copySuccess ? (
                 <>
                   <Check className="w-4 h-4" />
-                  SKOPIOWANO!
+                  {t.players.copied}
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  KOPIUJ LINK DO REJESTRACJI
+                  {t.players.copyInviteLink}
                 </>
               )}
             </button>

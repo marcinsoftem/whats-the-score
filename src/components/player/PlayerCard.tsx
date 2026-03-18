@@ -8,9 +8,10 @@ interface PlayerCardProps {
   alignRight?: boolean;
   color?: "primary" | "secondary";
   isMe?: boolean;
+  meLabel?: string;
 }
 
-export function PlayerCard({ player, className, alignRight, color = "primary", isMe }: PlayerCardProps) {
+export function PlayerCard({ player, className, alignRight, color = "primary", isMe, meLabel = "Ja" }: PlayerCardProps) {
   // We specify colors based on props, typically primary for P1 and secondary for P2
   const borderColorClass = color === "primary" ? "border-primary" : "border-secondary";
   const bgColorClass = color === "primary" ? "bg-primary/10" : "bg-secondary/10";
@@ -23,8 +24,12 @@ export function PlayerCard({ player, className, alignRight, color = "primary", i
         "w-12 h-12 rounded-full flex items-center justify-center border-2 shrink-0 transition-all",
         borderColorClass, bgColorClass, textColorClass, glowClass
       )}>
-        {player.avatarUrl ? (
-          <img src={player.avatarUrl} alt={player.nickname} className="w-full h-full rounded-full object-cover" />
+        {player.avatarUrl || (player as any).avatar_url ? (
+          <img 
+            src={player.avatarUrl || (player as any).avatar_url} 
+            alt={player.nickname} 
+            className="w-full h-full rounded-full object-cover" 
+          />
         ) : (
           <User className="w-6 h-6" />
         )}
@@ -36,7 +41,7 @@ export function PlayerCard({ player, className, alignRight, color = "primary", i
             "font-extrabold text-xl leading-none uppercase tracking-tighter truncate",
             textColorClass
           )}>
-            {isMe ? 'Ja' : player.nickname}
+            {isMe ? meLabel : player.nickname}
           </p>
         </div>
         <p className="text-muted text-[9px] mt-1 uppercase tracking-[0.2em] font-black opacity-40 leading-tight">

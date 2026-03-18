@@ -8,6 +8,7 @@ import { Player } from "@/types";
 import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 // Mock data removed
 
@@ -26,6 +27,7 @@ export default function MatchPage() {
 }
 
 function MatchPageContent() {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
 
@@ -57,6 +59,7 @@ function MatchPageContent() {
       const standardizedUser = user ? {
         id: user.id,
         nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Ty',
+        avatarUrl: user.user_metadata?.avatar_url,
         type: 'real'
       } : { id: 'anon', nickname: 'Ty', type: 'real' };
       setCurrentUser(standardizedUser);
@@ -111,15 +114,18 @@ function MatchPageContent() {
               return;
             }
 
+            const p1Formatted = { ...p1, avatarUrl: p1.avatar_url };
+            const p2Formatted = { ...p2, avatarUrl: p2.avatar_url };
+
             const shouldSwap = p2.id === standardizedUser.id;
             
             if (shouldSwap) {
-              setPlayer1(p2 as any);
-              setPlayer2(p1 as any);
+              setPlayer1(p2Formatted as any);
+              setPlayer2(p1Formatted as any);
               setGames(formattedGames.map((g: any) => ({ p1: g.p2, p2: g.p1 })));
             } else {
-              setPlayer1(p1 as any);
-              setPlayer2(p2 as any);
+              setPlayer1(p1Formatted as any);
+              setPlayer2(p2Formatted as any);
               setGames(formattedGames);
             }
             
@@ -205,7 +211,7 @@ function MatchPageContent() {
       localStorage.setItem('wts_active_match', JSON.stringify(state));
     } catch (err: any) {
       console.error('Error saving match to DB:', err);
-      setSaveError(err.message || "Błąd zapisu meczu w chmurze");
+      setSaveError(err.message || t.matches.active.syncError);
     } finally {
       setIsSaving(false);
     }
@@ -297,7 +303,7 @@ function MatchPageContent() {
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
-            {editId ? 'Edycja Meczu' : 'Mecz w toku'}
+            {editId ? t.matches.active.editTitle : t.matches.active.matchInProgress}
           </h1>
         </div>
 
@@ -306,7 +312,7 @@ function MatchPageContent() {
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-all group-hover:bg-primary/20">
               <Calendar className="w-4 h-4" />
             </div>
-            <span className="text-[10px] uppercase font-black tracking-widest text-muted group-hover:text-primary transition-colors">Data Meczu</span>
+            <span className="text-[10px] uppercase font-black tracking-widest text-muted group-hover:text-primary transition-colors">{t.matches.active.matchDate}</span>
           </div>
           <input 
             type="date" 
@@ -326,21 +332,21 @@ function MatchPageContent() {
       {isSaving && !saveError && (
         <div className="bg-primary/10 border border-primary/20 p-2 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
           <Loader2 className="w-3 h-3 animate-spin text-primary" />
-          <span className="text-[9px] font-black uppercase text-primary italic">Synchronizowanie z chmurą...</span>
+          <span className="text-[9px] font-black uppercase text-primary italic">{t.matches.active.syncing}</span>
         </div>
       )}
 
       <div className="flex justify-between items-center bg-accent/30 p-4 rounded-3xl border border-white/5 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-primary">{p1Games}</span>
-          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">Gemy</span>
+          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">{t.matches.gamesLabel.replace(':', '')}</span>
         </div>
         <div className="text-[10px] uppercase font-black text-primary tracking-[0.2em] px-5 py-2 bg-primary/10 rounded-full border border-primary/20">
-          Wynik Meczu
+          {t.matches.active.matchResult}
         </div>
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-secondary">{p2Games}</span>
-          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">Gemy</span>
+          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">{t.matches.gamesLabel.replace(':', '')}</span>
         </div>
       </div>
 
@@ -357,9 +363,10 @@ function MatchPageContent() {
               color="primary" 
               className="bg-transparent border-none p-0" 
               isMe={player1?.id === currentUser?.id}
+              meLabel={t.common.ja}
             />
           </button>
-          <ScoreCounter label="Twój Wynik" value={score1} onChange={setScore1} color="primary" />
+          <ScoreCounter label={t.matches.active.yourScore} value={score1} onChange={setScore1} color="primary" />
         </div>
 
         <div className="flex flex-col gap-8">
@@ -372,33 +379,34 @@ function MatchPageContent() {
               color="secondary" 
               className="bg-transparent border-none p-0" 
               isMe={player2?.id === currentUser?.id}
+              meLabel={t.common.ja}
               alignRight 
             />
           </button>
-          <ScoreCounter label="Przeciwnik" value={score2} onChange={setScore2} color="secondary" />
+          <ScoreCounter label={t.matches.active.opponent} value={score2} onChange={setScore2} color="secondary" />
         </div>
       </div>
 
       <section className="flex flex-col gap-4">
         <div className="flex justify-between items-end">
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted">Poprzednie Gemy</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted">{t.matches.active.previousGames}</h2>
             {editingIndex !== null && (
               <button 
                 onClick={handleCancelEdit}
                 className="text-[10px] text-secondary font-bold hover:underline flex items-center gap-1 uppercase tracking-tighter"
               >
-                Anuluj edycję gema {editingIndex + 1}
+                {t.matches.active.cancelEdit} {editingIndex + 1}
               </button>
             )}
           </div>
-          <span className="text-[10px] text-primary font-bold">{games.length} Zapisano</span>
+          <span className="text-[10px] text-primary font-bold">{games.length} {t.matches.active.saved}</span>
         </div>
         
         <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
           {games.length === 0 ? (
             <div className="w-full py-8 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-muted/30 text-xs uppercase font-bold tracking-widest italic">
-              Brak rozegranych gemów
+              {t.matches.active.noGames}
             </div>
           ) : (
             games.map((game, i) => (
@@ -412,7 +420,7 @@ function MatchPageContent() {
                 }`}
               >
                 <span className={`text-[9px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>
-                  Gem {i+1} {editingIndex === i && "(EDYTUJESZ)"}
+                  Gem {i+1} {editingIndex === i && `(${t.common.edit.toUpperCase()})`}
                 </span>
                 <span className="text-2xl font-bold font-barlow-condensed tracking-wider text-foreground">
                   <span className={game.p1 > game.p2 ? "text-primary" : ""}>{game.p1}</span>
@@ -431,7 +439,7 @@ function MatchPageContent() {
           disabled={!isValidScore}
           className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black uppercase"
         >
-          {editingIndex !== null ? 'Aktualizuj Gem' : 'Zapisz Gem'}
+          {editingIndex !== null ? t.matches.active.updateGame : t.matches.active.saveGame}
         </button>
       </div>
 
@@ -445,7 +453,7 @@ function MatchPageContent() {
           <div className="w-full max-w-md bg-[#1a1a1a] rounded-[2.5rem] p-6 pb-14 shadow-2xl relative animate-in slide-in-from-bottom-full duration-300 border border-white/10">
             <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6" />
             <h3 className="text-center font-black uppercase tracking-widest text-muted mb-6">
-              Opcje dla Gema {actionSheetIndex + 1}
+              {t.matches.active.gameOptions} {actionSheetIndex + 1}
             </h3>
             <div className="flex flex-col gap-4">
               <button 
@@ -453,14 +461,14 @@ function MatchPageContent() {
                 className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-foreground transition-all active:scale-95"
               >
                 <Pencil className="w-5 h-5" />
-                Edytuj wynik
+                {t.matches.active.editScore}
               </button>
               <button 
                 onClick={() => handleDeleteGame(actionSheetIndex!)}
                 className="w-full py-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-red-500 transition-all active:scale-95"
               >
                 <Trash2 className="w-5 h-5" />
-                Usuń gem
+                {t.matches.active.deleteGame}
               </button>
             </div>
           </div>

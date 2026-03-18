@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
 
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+
 export default function PlayersPage() {
   return (
     <AuthGuard>
@@ -16,6 +18,7 @@ export default function PlayersPage() {
 }
 
 function PlayersPageContent() {
+  const { t } = useLanguage();
   const [players, setPlayers] = useState<any[]>([]);
   const [favIds, setFavIds] = useState<string[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
@@ -68,7 +71,7 @@ function PlayersPageContent() {
             })
             .map(p => ({
               id: p.id,
-              nickname: p.nickname || 'Anonim',
+              nickname: p.nickname || t.common.anonim,
               type: p.type || 'real',
               avatarUrl: p.avatar_url,
               owner_id: p.owner_id
@@ -171,7 +174,7 @@ function PlayersPageContent() {
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
-            Zarządzaj Graczami
+            {t.players.title}
           </h1>
         </div>
 
@@ -179,7 +182,7 @@ function PlayersPageContent() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary transition-colors" />
           <input 
             type="text" 
-            placeholder="Szukaj zawodnika..."
+            placeholder={t.players.searchPlaceholder}
             className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none focus:border-primary/50 transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -191,7 +194,7 @@ function PlayersPageContent() {
         {filteredPlayers.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center gap-4 opacity-30">
             <UserPlus className="w-12 h-12" />
-            <p className="text-xs font-black uppercase tracking-widest italic">Nie znaleziono graczy</p>
+            <p className="text-xs font-black uppercase tracking-widest italic">{t.players.noPlayers}</p>
           </div>
         ) : (
           filteredPlayers.map((player) => {
@@ -222,15 +225,15 @@ function PlayersPageContent() {
                     <span className="font-black uppercase italic tracking-tighter text-lg leading-tight">{player.nickname}</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {isVirtual ? (
-                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 border border-primary/20 px-1.5 py-0.5 rounded-full">Wirtualny</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 border border-primary/20 px-1.5 py-0.5 rounded-full">{t.players.virtual}</span>
                       ) : (
                         <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-secondary/60 border border-secondary/20 px-1.5 py-0.5 rounded-full">
                           <Shield className="w-2 h-2" />
-                          Realny
+                          {t.players.real}
                         </div>
                       )}
                       {isOwner && isVirtual && (
-                        <span className="text-[8px] font-black uppercase tracking-widest bg-white/5 text-muted px-1.5 py-0.5 rounded-full">Ty</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest bg-white/5 text-muted px-1.5 py-0.5 rounded-full">{t.common.ja}</span>
                       )}
                     </div>
                   </div>
@@ -277,7 +280,7 @@ function PlayersPageContent() {
           className="btn-primary w-full py-6 text-xl shadow-[0_10px_30px_rgba(198,255,0,0.2)] flex items-center justify-center gap-3"
         >
           <UserPlus className="w-6 h-6" />
-          NOWY ZAWODNIK
+          {t.players.createPlayer}
         </Link>
       </div>
       {/* Delete Confirmation Overlay */}
@@ -292,12 +295,12 @@ function PlayersPageContent() {
               
               <div className="space-y-3">
                 <h3 className="text-2xl font-black uppercase italic tracking-tighter">
-                  {hasHistory ? 'Ważne ostrzeżenie!' : 'Czy na pewno?'}
+                  {hasHistory ? t.players.deleteConfirmTitle : t.players.deleteConfirmQuestion}
                 </h3>
                 <p className="text-muted text-sm font-medium leading-relaxed">
                   {hasHistory 
-                    ? 'Ten zawodnik ma przypisane mecze w historii. Usunięcie go spowoduje, że jego dane w tamtych meczach mogą być niepełne. Kontynuować?'
-                    : 'Czy na pewno chcesz usunąć tego zawodnika? Ta operacja jest nieodwracalna.'}
+                    ? t.players.deleteConfirmMatchText
+                    : t.players.deleteConfirmText}
                 </p>
               </div>
 
@@ -308,13 +311,13 @@ function PlayersPageContent() {
                     hasHistory ? 'bg-[#FF5722] text-white' : 'bg-red-500 text-white'
                   }`}
                 >
-                  Tak, usuń gracza
+                  {t.players.deleteConfirmButton}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all active:scale-95"
                 >
-                  Anuluj
+                  {t.common.cancel}
                 </button>
               </div>
             </div>

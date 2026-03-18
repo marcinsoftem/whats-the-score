@@ -9,6 +9,8 @@ import { PlayerCard } from "@/components/player/PlayerCard";
 import { createClient } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
 
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+
 export default function Home() {
   return (
     <AuthGuard>
@@ -18,6 +20,7 @@ export default function Home() {
 }
 
 function HomeContent() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [matches, setMatches] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -121,7 +124,7 @@ function HomeContent() {
         }
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
-        setError(err.message || "Błąd pobierania danych z bazy");
+        setError(err.message || t.home.dbError);
       }
 
       setIsLoaded(true);
@@ -171,13 +174,13 @@ function HomeContent() {
   return (
     <div className="flex flex-col gap-8">
       <header className="text-left">
-        <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
-        <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
+        <h1 className="text-4xl font-bold italic tracking-tighter text-primary">{t.home.title}</h1>
+        <p className="text-muted mt-2">{t.home.subtitle}</p>
       </header>
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex flex-col gap-1 items-center justify-center text-center">
-            <span className="text-xs font-black uppercase text-red-500 italic">Błąd połączenia z bazą</span>
+            <span className="text-xs font-black uppercase text-red-500 italic">{t.home.dbError}</span>
             <p className="text-[10px] text-red-500/70">{error}</p>
         </div>
       )}
@@ -185,11 +188,11 @@ function HomeContent() {
       <section className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center px-1">
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted italic">Z kim dzisiaj grasz?</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted italic">{t.home.whoToday}</h2>
             <div className="flex items-center gap-3">
               {availablePlayers.length > 0 && (
                 <span className="text-[10px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                  {availablePlayers.length} graczy
+                  {t.home.playerCount.replace('{count}', availablePlayers.length.toString())}
                 </span>
               )}
             </div>
@@ -235,14 +238,14 @@ function HomeContent() {
               <div className="w-14 h-14 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 group hover:border-primary transition-colors">
                 <Plus className="w-6 h-6 text-muted group-hover:text-primary transition-colors" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-tighter text-muted">Dodaj</span>
+              <span className="text-[10px] font-black uppercase tracking-tighter text-muted">{t.players.addPlayer}</span>
             </Link>
           </div>
         </div>
 
         {currentUser && opponentId && (
           <div className="flex items-center justify-center gap-3 mb-4 animate-in slide-in-from-top-2 duration-500">
-            <span className="text-[14px] font-black uppercase tracking-widest text-primary italic">Ja</span>
+            <span className="text-[14px] font-black uppercase tracking-widest text-primary italic">{t.common.ja}</span>
             <span className="text-[12px] font-black text-muted opacity-30 italic">VS</span>
             <span className="text-[14px] font-black uppercase tracking-widest text-secondary italic">
               {availablePlayers.find(p => p.id === opponentId)?.nickname}
@@ -257,7 +260,7 @@ function HomeContent() {
             className="btn-primary w-full py-6 text-2xl shadow-[0_10px_30px_rgba(198,255,0,0.2)] active:scale-[0.98] transition-all group disabled:opacity-20 disabled:grayscale disabled:shadow-none relative z-10"
           >
             <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-            NOWY MECZ
+            {t.home.startMatch.toUpperCase()}
           </button>
           
           {opponentId && (
@@ -268,14 +271,14 @@ function HomeContent() {
 
       <section className="flex flex-col gap-4">
         <div className="flex justify-between items-end px-1">
-          <h2 className="text-lg font-black uppercase tracking-tighter italic">Ostatnie Mecze</h2>
-          <Link href="/matches" className="text-primary text-[10px] uppercase font-black tracking-widest hover:underline">Zobacz wszystkie</Link>
+          <h2 className="text-lg font-black uppercase tracking-tighter italic">{t.home.recentMatches}</h2>
+          <Link href="/matches" className="text-primary text-[10px] uppercase font-black tracking-widest hover:underline">{t.home.viewHistory}</Link>
         </div>
         
         {matches.length === 0 ? (
           <div className="card flex flex-col gap-4 items-center justify-center py-12 text-center bg-accent/10 border-dashed border-white/10 opacity-50">
             <Trophy className="w-10 h-10 text-muted opacity-20" />
-            <p className="text-muted text-xs font-bold uppercase tracking-widest italic px-8 opacity-50">Nie masz jeszcze żadnych zapisanych meczów.</p>
+            <p className="text-muted text-xs font-bold uppercase tracking-widest italic px-8 opacity-50">{t.matches.noMatches}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -305,14 +308,16 @@ function HomeContent() {
                     className="relative z-10"
                   >
                     <Link href={`/matches/active?id=${match.id}`} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3">
-                      <span className="text-[9px] font-black uppercase tracking-widest text-muted shrink-0 w-10">
-                        {formatDate(match.timestamp)}
-                      </span>
+                      <div className="flex flex-col shrink-0 w-10">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted">
+                          {formatDate(match.timestamp)}
+                        </span>
+                      </div>
                       
                       <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">
-                            {match.players[0].id === currentUser?.id ? 'Ja' : match.players[0].nickname}
+                            {match.players[0].id === currentUser?.id ? t.common.ja : match.players[0].nickname}
                           </span>
                           <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
                             {match.players[0].avatarUrl ? (
@@ -338,10 +343,20 @@ function HomeContent() {
                             )}
                           </div>
                           <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">
-                            {match.players[1].id === currentUser?.id ? 'Ja' : match.players[1].nickname}
+                            {match.players[1].id === currentUser?.id ? t.common.ja : match.players[1].nickname}
                           </span>
                         </div>
                       </div>
+
+                      {(() => {
+                        const isP1 = match.players[0].id === currentUser?.id;
+                        const userScore = isP1 ? match.score1 : match.score2;
+                        const oppScore = isP1 ? match.score2 : match.score1;
+                        if (userScore > oppScore) {
+                          return <Trophy className="w-6 h-6 text-primary shrink-0 self-center drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />;
+                        }
+                        return <div className="w-6 shrink-0" />; // Placeholder to maintain alignment
+                      })()}
                     </Link>
                   </motion.div>
                 </motion.div>

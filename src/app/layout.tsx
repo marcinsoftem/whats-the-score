@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 import Navbar from "@/components/layout/Navbar";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
 export default function RootLayout({
   children,
@@ -17,13 +18,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pl">
       <body className="antialiased min-h-screen pb-20">
-        <main className="max-w-md mx-auto px-4 pt-6">
-          {children}
-        </main>
-        
-        <Navbar />
+        <LanguageProvider>
+          <main className="max-w-md mx-auto px-4 pt-6">
+            {children}
+          </main>
+          
+          <Navbar />
+        </LanguageProvider>
       </body>
     </html>
   );

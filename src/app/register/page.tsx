@@ -4,9 +4,11 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient, isConfigured } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { UserPlus, Loader2, FastForward, CheckCircle2 } from 'lucide-react'
+import { UserPlus, Loader2, FastForward, CheckCircle2, Globe } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 function RegisterContent() {
+  const { t, language, setLanguage } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
@@ -41,7 +43,7 @@ function RegisterContent() {
 
     // Check if Supabase is configured
     if (!isConfigured()) {
-      setError('Błąd konfiguracji Supabase. Na Vercel upewnij się, że masz dodane zmienne NEXT_PUBLIC_SUPABASE_URL oraz NEXT_PUBLIC_SUPABASE_ANON_KEY (z przedrostkiem NEXT_PUBLIC_).')
+      setError(t.auth.emailConfigError)
       setLoading(false)
       return
     }
@@ -78,8 +80,8 @@ function RegisterContent() {
     <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold italic tracking-tighter text-primary">What&apos;s The Score?</h1>
-          <p className="text-muted mt-2">Przejmij kontrolę nad swoją grą</p>
+          <h1 className="text-4xl font-bold italic tracking-tighter text-primary">{t.home.title}</h1>
+          <p className="text-muted mt-2">{t.home.subtitle}</p>
         </div>
 
         <div className="card shadow-2xl relative overflow-hidden min-h-[360px] flex flex-col justify-center p-6">
@@ -100,7 +102,7 @@ function RegisterContent() {
             {step === 1 ? (
               <>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted uppercase tracking-wider">Email</label>
+                  <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.email}</label>
                   <input
                     type="email"
                     required
@@ -112,7 +114,7 @@ function RegisterContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted uppercase tracking-wider">Hasło</label>
+                  <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.password}</label>
                   <input
                     type="password"
                     required
@@ -128,7 +130,7 @@ function RegisterContent() {
                   onClick={() => setStep(2)}
                   className="btn-primary w-full h-[56px] text-lg"
                 >
-                  DALEJ
+                  {t.auth.nextStep}
                   <FastForward className="w-5 h-5" />
                 </button>
               </>
@@ -152,16 +154,16 @@ function RegisterContent() {
                       </div>
                     </div>
                   </button>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">KLIKNIJ ABY WYLOSOWAĆ</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">{t.players.clickToRandomize}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted uppercase tracking-wider">Pseudonim</label>
+                  <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.nickname}</label>
                   <input
                     type="text"
                     required
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                    placeholder="Twoja ksywa"
+                    placeholder={t.players.nickname}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                   />
@@ -173,7 +175,7 @@ function RegisterContent() {
                     onClick={() => setStep(1)}
                     className="flex-1 bg-white/5 text-white font-bold h-[56px] rounded-xl"
                   >
-                    WRÓĆ
+                    {t.auth.back}
                   </button>
                   <button
                     type="submit"
@@ -185,7 +187,7 @@ function RegisterContent() {
                     ) : (
                       <>
                         <UserPlus className="w-5 h-5" />
-                        STWÓRZ KONTO
+                        {t.auth.createAccountButton}
                       </>
                     )}
                   </button>
@@ -196,11 +198,21 @@ function RegisterContent() {
         </div>
 
         <p className="text-center text-muted">
-          Masz już konto?{' '}
+          {t.auth.haveAccount}{' '}
           <Link href="/login" className="text-secondary font-bold hover:underline">
-            ZALOGUJ SIĘ
+            {t.auth.signIn.toUpperCase()}
           </Link>
         </p>
+
+        <div className="flex justify-center mt-4 text-center">
+          <button 
+            onClick={() => setLanguage(language === 'pl' ? 'en' : 'pl')}
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 hover:bg-primary/20 transition-all italic mx-auto"
+          >
+            <Globe className="w-3 h-3" />
+            {language === 'pl' ? 'English (EN)' : 'Polski (PL)'}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -8,6 +8,8 @@ import Link from "next/link";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { createClient } from "@/lib/supabase/client";
 
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+
 export default function MatchesPage() {
   return (
     <AuthGuard>
@@ -17,6 +19,7 @@ export default function MatchesPage() {
 }
 
 function MatchesListContent() {
+  const { t, language } = useLanguage();
   const [matches, setMatches] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -85,13 +88,13 @@ function MatchesListContent() {
       setMatches(prev => prev.filter(m => m.id !== matchId));
     } catch (err) {
       console.error('Error deleting match:', err);
-      alert('Nie udało się usunąć meczu');
+      alert(t.common.error);
     }
   };
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleDateString('pl-PL', { 
+    return date.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { 
       day: '2-digit', 
       month: 'short', 
       year: 'numeric',
@@ -111,7 +114,7 @@ function MatchesListContent() {
         >
           <ChevronLeft className="w-6 h-6" />
         </Link>
-        <h1 className="text-2xl flex-1 font-bold tracking-tight uppercase italic text-primary">HISTORIA MECZÓW</h1>
+        <h1 className="text-2xl flex-1 font-bold tracking-tight uppercase italic text-primary">{t.matches.title}</h1>
       </header>
 
       {matches.length === 0 ? (
@@ -119,8 +122,8 @@ function MatchesListContent() {
           <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-muted mb-2 border border-white/5">
             <Trophy className="w-8 h-8 opacity-20" />
           </div>
-          <p className="text-muted text-sm font-medium uppercase tracking-widest italic">Nie znaleziono Twoich meczów</p>
-          <Link href="/matches/active" className="btn-primary mt-4">Rozpocznij pierwszy mecz</Link>
+          <p className="text-muted text-sm font-medium uppercase tracking-widest italic">{t.matches.noMatches}</p>
+          <Link href="/matches/active" className="btn-primary mt-4">{t.home.startMatch}</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-5">
@@ -155,16 +158,27 @@ function MatchesListContent() {
                         <Calendar className="w-3 h-3 text-primary" />
                         {formatDate(match.timestamp)}
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20 text-[10px] font-black text-primary uppercase tracking-tighter">
-                          Mecz Zakończony
-                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20 text-[10px] font-black text-primary uppercase tracking-tighter">
+                              {t.matches.matchFinished}
+                            </div>
+                            {(() => {
+                              const isP1 = match.players[0].id === currentUser?.id;
+                              const userScore = isP1 ? match.score1 : match.score2;
+                              const oppScore = isP1 ? match.score2 : match.score1;
+                              if (userScore > oppScore) {
+                                return <Trophy className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />;
+                              }
+                              return null;
+                            })()}
+                          </div>
                         <Link 
                           href={`/matches/active?id=${match.id}`}
                           className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted hover:text-primary transition-colors bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 active:scale-95"
                         >
                           <Pencil className="w-3 h-3" />
-                          Edytuj
+                          {t.common.edit}
                         </Link>
                       </div>
                     </div>
@@ -176,6 +190,7 @@ function MatchesListContent() {
                           color="primary" 
                           className="bg-transparent border-none p-0" 
                           isMe={match.players[0].id === currentUser?.id}
+                          meLabel={t.common.ja}
                         />
                         <div className="text-3xl font-black font-barlow-condensed text-primary text-center">
                           {match.score1}
@@ -192,6 +207,7 @@ function MatchesListContent() {
                           color="secondary" 
                           className="bg-transparent border-none p-0" 
                           isMe={match.players[1].id === currentUser?.id}
+                          meLabel={t.common.ja}
                           alignRight 
                         />
                         <div className="text-3xl font-black font-barlow-condensed text-secondary text-center">
@@ -201,7 +217,7 @@ function MatchesListContent() {
                     </div>
 
                     <div className="pt-4 border-t border-white/5 flex flex-col gap-3">
-                      <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted italic">GEMY:</p>
+                      <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted italic">{t.matches.gamesLabel}</p>
                       <div className="flex flex-wrap gap-2">
                         {match.games.map((game: any, i: number) => (
                           <div key={i} className="px-3 py-2 bg-white/5 rounded-xl border border-white/5 text-xs font-bold font-barlow-condensed">
