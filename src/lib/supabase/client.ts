@@ -12,11 +12,11 @@ export const createClient = () => {
 }
 
 export const isConfigured = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/^["']|["']$/g, '').trim()
+  const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/^["']|["']$/g, '').trim()
   
-  const isUrlValid = url && url !== '' && !url.includes('placeholder')
-  const isKeyValid = key && key !== '' && !key.includes('placeholder')
+  const isUrlValid = url !== '' && !url.includes('placeholder')
+  const isKeyValid = key !== '' && !key.includes('placeholder')
   
   if (!isUrlValid) console.warn('Supabase URL is missing or placeholder!');
   if (!isKeyValid) console.warn('Supabase ANON KEY is missing or placeholder!');
