@@ -7,6 +7,18 @@ export const metadata: Metadata = {
   title: "What's the Score? | WTS",
   description: "Track your squash match results with ease.",
   manifest: "/manifest.json",
+  themeColor: "#C6FF00",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WTS",
+  },
+  icons: {
+    apple: [
+      { url: "/icons/squash-ball-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/squash-ball-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 import Navbar from "@/components/layout/Navbar";
