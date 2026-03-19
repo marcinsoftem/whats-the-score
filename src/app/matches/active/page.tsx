@@ -55,6 +55,7 @@ function MatchPageContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const isDeletingRef = useRef(false);
   const saveInProgressRef = useRef(false);
+  const [isPersisted, setIsPersisted] = useState(false);
 
   const supabase = createClient();
 
@@ -140,6 +141,7 @@ function MatchPageContent() {
             setScore2(0);
             setIsSetup(false);
             setIsCompleted(true);
+            setIsPersisted(true);
           }
         } else {
           const savedMatch = localStorage.getItem('wts_active_match');
@@ -153,6 +155,7 @@ function MatchPageContent() {
             setPlayer1(data.player1 || null);
             setPlayer2(data.player2 || null);
             setIsCompleted(data.isCompleted || false);
+            setIsPersisted(data.isPersisted || false);
             if (data.player1 && data.player2) setIsSetup(false);
           }
         }
@@ -227,8 +230,10 @@ function MatchPageContent() {
         if (gamesError) throw gamesError;
       }
 
+      setIsPersisted(true);
+
       // 3. Update local storage for temporary persistence
-      const state = { score1, score2, games, matchId, matchDate, player1, player2, isCompleted };
+      const state = { score1, score2, games, matchId, matchDate, player1, player2, isCompleted, isPersisted: true };
       localStorage.setItem('wts_active_match', JSON.stringify(state));
     } catch (err: any) {
       console.error('Error saving match to DB:', err);
@@ -559,20 +564,22 @@ function MatchPageContent() {
             {editingIndex !== null ? t.matches.active.updateGame : t.matches.active.saveGame}
           </button>
 
-          <button
-            onClick={handleDeleteMatchCurrent}
-            className={`w-[72px] border rounded-[20px] flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(239,68,68,0.1)] active:scale-95 ${
-              isConfirmingDelete 
-                ? 'bg-red-500 text-white border-red-500' 
-                : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20'
-            }`}
-          >
-            {isConfirmingDelete ? (
-              <span className="text-[9px] px-1 text-center font-black uppercase leading-tight">Na pewno?</span>
-            ) : (
-              <Trash2 className="w-6 h-6" />
-            )}
-          </button>
+          {isPersisted && (
+            <button
+              onClick={handleDeleteMatchCurrent}
+              className={`w-[72px] border rounded-[20px] flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(239,68,68,0.1)] active:scale-95 ${
+                isConfirmingDelete 
+                  ? 'bg-red-500 text-white border-red-500' 
+                  : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20'
+              }`}
+            >
+              {isConfirmingDelete ? (
+                <span className="text-[9px] px-1 text-center font-black uppercase leading-tight">Na pewno?</span>
+              ) : (
+                <Trash2 className="w-6 h-6" />
+              )}
+            </button>
+          )}
         </div>
       )}
 
