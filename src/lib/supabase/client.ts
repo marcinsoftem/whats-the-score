@@ -1,11 +1,23 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 export const createClient = () => {
-  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co').replace(/^["']|["']$/g, '')
-  const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder').replace(/^["']|["']$/g, '')
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const rawKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  console.log('Supabase Env Check:', {
+    hasUrl: !!rawUrl,
+    urlLength: rawUrl?.length || 0,
+    hasKey: !!rawKey,
+    keyLength: rawKey?.length || 0,
+    isPlaceholderUrl: rawUrl?.includes('placeholder'),
+    isPlaceholderKey: rawKey?.includes('placeholder')
+  });
+
+  const supabaseUrl = (rawUrl || 'https://placeholder.supabase.co').replace(/^["']|["']$/g, '').trim()
+  const supabaseKey = (rawKey || 'placeholder').replace(/^["']|["']$/g, '').trim()
   
-  if (supabaseKey === 'placeholder') {
-    console.error('Supabase client is being created with a PLACEHOLDER key! Check your environment variables.');
+  if (supabaseKey === 'placeholder' || supabaseKey === '') {
+    console.error('Supabase client is being created with a MISSING or PLACEHOLDER key!');
   }
   
   return createBrowserClient(supabaseUrl, supabaseKey)
