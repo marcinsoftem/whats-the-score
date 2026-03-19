@@ -41,6 +41,36 @@ function RegisterContent() {
     setLoading(true)
     setError(null)
 
+    // Check if nickname already exists
+    try {
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, type')
+        .ilike('nickname', nickname)
+        .maybeSingle();
+
+      if (checkError) {
+        console.warn('Error checking nickname availability:', checkError);
+      }
+
+      if (existingProfile) {
+         // If it's a real user, we can't take it
+         if (existingProfile.type === 'real') {
+           setError('Ten pseudonim jest już zajęty przez innego użytkownika.');
+           setLoading(false);
+           return;
+         }
+         // If it's a virtual user but we don't have matching invite_id, it's risky
+         if (existingProfile.type === 'virtual' && existingProfile.id !== inviteId) {
+           setError('Ten pseudonim jest zarezerwowany dla innego gracza wirtualnego.');
+           setLoading(false);
+           return;
+         }
+      }
+    } catch (err) {
+      console.error('Pre-registration check failed:', err);
+    }
+
     // Check if Supabase is configured
     if (!isConfigured()) {
       setError(t.auth.emailConfigError)
@@ -49,6 +79,15 @@ function RegisterContent() {
     }
 
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`
+
+    const isValidUUID = (id: string | null) => {
+      if (!id) return false;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(id);
+    };
+
+    const cleanInviteId = isValidUUID(inviteId) ? inviteId : null;
+    console.log('Registering with:', { email, nickname, cleanInviteId });
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -59,16 +98,19 @@ function RegisterContent() {
           nickname,
           avatar_url: avatarUrl,
           type: 'real',
-          invite_id: inviteId, // Passed to DB trigger for automated claiming
+          invite_id: cleanInviteId, // Passed to DB trigger for automated claiming
         },
       },
     })
 
     if (signUpError) {
+      console.error('Registration error details:', signUpError);
       if (signUpError.message.includes('rate limit')) {
         setError('Osiągnięto limit wysyłki e-maili. Odczekaj chwilę lub poproś administratora o wyłączenie potwierdzania e-maili w Supabase.')
       } else {
-        setError(signUpError.message)
+        // Show more details if available in the error object (e.g. from trigger)
+        const detailedError = signUpError.message + (signUpError.cause ? ` (${signUpError.cause})` : '');
+        setError(detailedError)
       }
       setLoading(false)
     } else {

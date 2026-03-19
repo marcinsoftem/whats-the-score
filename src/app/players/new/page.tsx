@@ -154,8 +154,7 @@ function AddPlayerContent() {
             nickname: cleanNick,
             type: 'virtual',
             owner_id: currentUser.id === 'anon' ? null : currentUser.id,
-            avatar_url: avatarUrl,
-            is_claimed: false
+            avatar_url: avatarUrl
           })
           .select()
           .single();
@@ -178,8 +177,13 @@ function AddPlayerContent() {
     }
 
     savePlayer().catch(err => {
-      console.error('Error saving player:', err);
-      setError(err?.message || t.players.saveError);
+      console.error('Database error saving player:', err);
+      // Construct a more descriptive error message if DB returns hints/details
+      const dbError = err?.message || t.players.saveError;
+      const dbHint = err?.hint ? ` (Hint: ${err.hint})` : '';
+      const dbDetails = err?.details ? ` [${err.details}]` : '';
+      
+      setError(`${dbError}${dbHint}${dbDetails}`);
       setLoading(false);
     });
   };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Preloader } from '@/components/ui/Preloader'
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
@@ -36,11 +36,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [router, supabase])
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      </div>
-    )
+    return <Preloader />
   }
 
   return <>{children}</>

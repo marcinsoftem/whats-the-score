@@ -28,6 +28,7 @@ export default function MatchPage() {
 
 function MatchPageContent() {
   const { t } = useLanguage();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
 
@@ -37,6 +38,7 @@ function MatchPageContent() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   
   // Setup state
   const [isSetup, setIsSetup] = useState(true);
@@ -211,17 +213,17 @@ function MatchPageContent() {
       localStorage.setItem('wts_active_match', JSON.stringify(state));
     } catch (err: any) {
       console.error('Error saving match to DB:', err);
-      setSaveError(err.message || t.matches.active.syncError);
+      setSaveError(`${err.message}${err.hint ? ` (Hint: ${err.hint})` : ''}${err.details ? ` [${err.details}]` : ''}` || t.matches.active.syncError);
     } finally {
       setIsSaving(false);
     }
   };
 
   useEffect(() => {
-    if (isLoaded && !isSetup) {
+    if (isLoaded && !isSetup && hasInteracted) {
       saveMatchToDb();
     }
-  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser]);
+  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser, hasInteracted]);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
@@ -248,6 +250,7 @@ function MatchPageContent() {
     
     setScore1(0);
     setScore2(0);
+    setHasInteracted(true);
   };
 
   const handleDeleteGame = (index: number) => {
@@ -261,6 +264,7 @@ function MatchPageContent() {
     } else if (editingIndex !== null && editingIndex > index) {
       setEditingIndex(editingIndex - 1);
     }
+    setHasInteracted(true);
     setActionSheetIndex(null);
   };
 
@@ -278,7 +282,6 @@ function MatchPageContent() {
     setScore2(0);
   };
 
-  const router = useRouter();
 
   const handleGoBack = () => {
     // Clear active match if we were editing specific one
@@ -317,24 +320,30 @@ function MatchPageContent() {
           <input 
             type="date" 
             value={matchDate}
-            onChange={(e) => setMatchDate(e.target.value)}
+            onChange={(e) => {
+              setMatchDate(e.target.value);
+              setHasInteracted(true);
+            }}
             className="bg-transparent text-sm font-bold text-foreground outline-none border-none p-0 focus:ring-0 cursor-pointer selection:bg-primary/30"
           />
         </div>
+
+        {/* Sync Status Overlay (Subtle) */}
+        <div className="h-1 text-center relative">
+          {saveError && (
+            <div className="absolute top-0 left-0 right-0 bg-secondary/10 border border-secondary/20 p-2 rounded-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 z-50">
+              <span className="text-[9px] font-black uppercase text-secondary italic">Sync Error: {saveError}</span>
+            </div>
+          )}
+          {isSaving && !saveError && (
+            <div className="absolute top-0 right-0 p-1 flex items-center gap-2 bg-primary/10 rounded-full border border-primary/20 pr-3 animate-in fade-in slide-in-from-top-1 duration-300">
+              <Loader2 className="w-3 h-3 animate-spin text-primary" />
+              <span className="text-[8px] font-black uppercase text-primary italic tracking-tight">Sync</span>
+            </div>
+          )}
+        </div>
       </header>
 
-      {saveError && (
-        <div className="bg-secondary/10 border border-secondary/20 p-3 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
-          <span className="text-[10px] font-black uppercase text-secondary italic">Błąd synchronizacji: {saveError}</span>
-        </div>
-      )}
-
-      {isSaving && !saveError && (
-        <div className="bg-primary/10 border border-primary/20 p-2 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
-          <Loader2 className="w-3 h-3 animate-spin text-primary" />
-          <span className="text-[9px] font-black uppercase text-primary italic">{t.matches.active.syncing}</span>
-        </div>
-      )}
 
       <div className="flex justify-between items-center bg-accent/30 p-4 rounded-3xl border border-white/5 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-1">
@@ -355,7 +364,7 @@ function MatchPageContent() {
         
         <div className="flex flex-col gap-8">
           <button 
-            onClick={() => { setScore1(11); setScore2(7); }}
+            onClick={() => { setScore1(11); setScore2(7); setHasInteracted(true); }}
             className="text-left active:scale-95 transition-transform"
           >
             <PlayerCard 
@@ -366,12 +375,20 @@ function MatchPageContent() {
               meLabel={t.common.ja}
             />
           </button>
-          <ScoreCounter label={t.matches.active.yourScore} value={score1} onChange={setScore1} color="primary" />
+          <ScoreCounter 
+            label={t.matches.active.yourScore} 
+            value={score1} 
+            onChange={(val) => {
+              setScore1(val);
+              setHasInteracted(true);
+            }} 
+            color="primary" 
+          />
         </div>
 
         <div className="flex flex-col gap-8">
           <button 
-            onClick={() => { setScore1(7); setScore2(11); }}
+            onClick={() => { setScore1(7); setScore2(11); setHasInteracted(true); }}
             className="text-right active:scale-95 transition-transform"
           >
             <PlayerCard 
@@ -383,7 +400,15 @@ function MatchPageContent() {
               alignRight 
             />
           </button>
-          <ScoreCounter label={t.matches.active.opponent} value={score2} onChange={setScore2} color="secondary" />
+          <ScoreCounter 
+            label={t.matches.active.opponent} 
+            value={score2} 
+            onChange={(val) => {
+              setScore2(val);
+              setHasInteracted(true);
+            }} 
+            color="secondary" 
+          />
         </div>
       </div>
 

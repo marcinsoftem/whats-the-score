@@ -224,16 +224,8 @@ function PlayersPageContent() {
                   <div className="flex flex-col">
                     <span className="font-black uppercase italic tracking-tighter text-lg leading-tight">{player.nickname}</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      {isVirtual ? (
+                      {isVirtual && (
                         <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 border border-primary/20 px-1.5 py-0.5 rounded-full">{t.players.virtual}</span>
-                      ) : (
-                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-secondary/60 border border-secondary/20 px-1.5 py-0.5 rounded-full">
-                          <Shield className="w-2 h-2" />
-                          {t.players.real}
-                        </div>
-                      )}
-                      {isOwner && isVirtual && (
-                        <span className="text-[8px] font-black uppercase tracking-widest bg-white/5 text-muted px-1.5 py-0.5 rounded-full">{t.common.ja}</span>
                       )}
                     </div>
                   </div>

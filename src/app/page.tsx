@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { createClient } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { Preloader } from "@/components/ui/Preloader";
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -169,7 +170,7 @@ function HomeContent() {
     });
   };
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return <Preloader />;
 
   return (
     <div className="flex flex-col gap-8">

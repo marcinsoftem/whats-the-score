@@ -190,7 +190,7 @@ function StatsContent() {
         </div>
       </section>
 
-      {/* Recent Trend Chart */}
+      {/* Recent Trend Chart (Line Chart) */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-3 px-2">
           <TrendingUp className="w-5 h-5 text-secondary" />
@@ -198,26 +198,84 @@ function StatsContent() {
             {t.stats.recentTrend}
           </h2>
         </div>
-        <div className="card p-6 bg-accent/10 border-white/5">
-          <div className="flex items-end justify-between h-32 gap-2 px-2">
-            {stats.recentPerformance.map((item: any, i: number) => {
-              const height = (item.userScore / 15) * 100; // Normalized to 15 max
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                  <div className="relative w-full flex justify-center h-full items-end">
-                    <motion.div 
-                      initial={{ height: 0 }}
-                      animate={{ height: `${Math.min(height, 100)}%` }}
-                      transition={{ duration: 0.8, delay: i * 0.1 }}
-                      className={`w-full max-w-[12px] rounded-t-full transition-all ${
-                        item.win ? 'bg-primary' : 'bg-secondary/40'
-                      } group-hover:scale-110 shadow-[0_0_10px_rgba(198,255,0,0.1)]`}
+        <div className="card p-6 bg-accent/10 border-white/5 relative overflow-hidden group">
+          <div className="h-40 w-full relative pt-4">
+            <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              
+              {/* Baseline and grid lines */}
+              <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" strokeWidth="0.1" className="text-white/10" />
+              <line x1="0" y1="20" x2="100" y2="20" stroke="currentColor" strokeWidth="0.1" className="text-white/10" strokeDasharray="1,1" />
+              <line x1="0" y1="40" x2="100" y2="40" stroke="currentColor" strokeWidth="0.2" className="text-white/20" />
+
+              {(() => {
+                const data = stats.recentPerformance;
+                const points = data.map((d: any, i: number) => {
+                  const x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50;
+                  const y = 40 - (d.userScore / 3) * 40; // Max 3 games
+                  return `${x},${y}`;
+                });
+                const pathData = `M ${points.join(' L ')}`;
+                const areaData = `${pathData} L 100,40 L 0,40 Z`;
+
+                return (
+                  <>
+                    {/* Area fill */}
+                    <motion.path
+                      d={areaData}
+                      fill="url(#lineGradient)"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 1, delay: 0.5 }}
                     />
-                  </div>
-                  <span className="text-[8px] font-bold text-muted mt-1">{item.userScore}</span>
-                </div>
-              );
-            })}
+                    
+                    {/* The Line */}
+                    <motion.path
+                      d={pathData}
+                      fill="none"
+                      stroke="var(--primary)"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ duration: 1.5, ease: "easeInOut" }}
+                      className="drop-shadow-[0_0_8px_rgba(198,255,0,0.4)]"
+                    />
+
+                    {/* Data Points */}
+                    {data.map((d: any, i: number) => {
+                      const x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50;
+                      const y = 40 - (d.userScore / 3) * 40;
+                      return (
+                        <motion.circle
+                          key={i}
+                          cx={x}
+                          cy={y}
+                          r="1.2"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.8 + i * 0.1 }}
+                          className={d.win ? "fill-primary" : "fill-secondary/60"}
+                          stroke="#121212"
+                          strokeWidth="0.5"
+                        />
+                      );
+                    })}
+                  </>
+                );
+              })()}
+            </svg>
+          </div>
+          
+          <div className="flex justify-between mt-4 px-1">
+             <span className="text-[8px] font-bold text-muted uppercase tracking-widest">{stats.recentPerformance.length > 0 ? "Starsze" : ""}</span>
+             <span className="text-[8px] font-bold text-primary uppercase tracking-widest font-black italic">Ostatnie</span>
           </div>
         </div>
       </section>
