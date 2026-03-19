@@ -1,11 +1,11 @@
 "use client"
 
 import AuthGuard from "@/components/auth/AuthGuard";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { ScoreCounter } from "@/components/match/ScoreCounter";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { Player } from "@/types";
-import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2 } from "lucide-react";
+import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2, Lock, LockOpen } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -50,6 +50,10 @@ function MatchPageContent() {
   // New match state
   const [matchId, setMatchId] = useState<string>("");
   const [matchDate, setMatchDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isDeletingRef = useRef(false);
 
   const supabase = createClient();
 
@@ -134,6 +138,7 @@ function MatchPageContent() {
             setScore1(0);
             setScore2(0);
             setIsSetup(false);
+            setIsCompleted(true);
           }
         } else {
           const savedMatch = localStorage.getItem('wts_active_match');
@@ -146,6 +151,7 @@ function MatchPageContent() {
             setMatchDate(data.matchDate || new Date().toISOString().split('T')[0]);
             setPlayer1(data.player1 || null);
             setPlayer2(data.player2 || null);
+            setIsCompleted(data.isCompleted || false);
             if (data.player1 && data.player2) setIsSetup(false);
           }
         }
@@ -209,7 +215,7 @@ function MatchPageContent() {
       }
 
       // 3. Update local storage for temporary persistence
-      const state = { score1, score2, games, matchId, matchDate, player1, player2 };
+      const state = { score1, score2, games, matchId, matchDate, player1, player2, isCompleted };
       localStorage.setItem('wts_active_match', JSON.stringify(state));
     } catch (err: any) {
       console.error('Error saving match to DB:', err);
@@ -220,10 +226,10 @@ function MatchPageContent() {
   };
 
   useEffect(() => {
-    if (isLoaded && !isSetup && hasInteracted) {
+    if (isLoaded && !isSetup && hasInteracted && !isDeleting && !isDeletingRef.current) {
       saveMatchToDb();
     }
-  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser, hasInteracted]);
+  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser, hasInteracted, isCompleted, isDeleting]);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;
@@ -293,6 +299,51 @@ function MatchPageContent() {
     router.push(backUrl);
   };
 
+  const handleDeleteMatchCurrent = async () => {
+    if (!matchId) return;
+
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      setTimeout(() => setIsConfirmingDelete(false), 3000);
+      return;
+    }
+
+    try {
+      isDeletingRef.current = true;
+      setIsDeleting(true);
+      setHasInteracted(false); 
+      setIsSaving(true);
+      
+      console.log('Match Detail: Explicitly deleting match with ID:', matchId);
+      
+      // Try to delete from matches only (expecting cascade). 
+      // If it fails with constraint error, we delete games first.
+      const { error: mError } = await supabase.from('matches').delete().eq('id', matchId);
+      
+      if (mError) {
+        if (mError.code === '23503') { // Foreign key constraint violation
+          const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
+          if (gError) throw gError;
+          const { error: mError2 } = await supabase.from('matches').delete().eq('id', matchId);
+          if (mError2) throw mError2;
+        } else {
+          throw mError;
+        }
+      }
+      
+      localStorage.removeItem('wts_active_match');
+      router.push('/');
+    } catch (err: any) {
+      console.error('Full delete error object:', err);
+      alert(`Błąd usuwania: ${err.message || 'Błąd serwera'} (MatchID: ${matchId.substring(0, 8)}... Code: ${err.code || '?'})`);
+      setIsDeleting(false);
+      isDeletingRef.current = false;
+      setIsSaving(false);
+    } finally {
+      setIsConfirmingDelete(false);
+    }
+  };
+
   if (!isLoaded) return null;
 
   return (
@@ -305,9 +356,18 @@ function MatchPageContent() {
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
+          <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center italic text-primary">
             {editId ? t.matches.active.editTitle : t.matches.active.matchInProgress}
           </h1>
+          <button
+            onClick={() => {
+              setIsCompleted(!isCompleted);
+              setHasInteracted(true);
+            }}
+            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
+          >
+            {isCompleted ? <Lock className="w-5 h-5 text-secondary" /> : <LockOpen className="w-5 h-5 text-primary" />}
+          </button>
         </div>
 
         <div className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 group">
@@ -364,8 +424,8 @@ function MatchPageContent() {
         
         <div className="flex flex-col gap-8">
           <button 
-            onClick={() => { setScore1(11); setScore2(7); setHasInteracted(true); }}
-            className="text-left active:scale-95 transition-transform"
+            onClick={() => { if (!isCompleted) { setScore1(11); setScore2(7); setHasInteracted(true); } }}
+            className={`text-left transition-transform ${isCompleted ? 'cursor-default' : 'active:scale-95'}`}
           >
             <PlayerCard 
               player={player1!} 
@@ -375,21 +435,23 @@ function MatchPageContent() {
               meLabel={t.common.ja}
             />
           </button>
-          <ScoreCounter 
-            label={t.matches.active.yourScore} 
-            value={score1} 
-            onChange={(val) => {
-              setScore1(val);
-              setHasInteracted(true);
-            }} 
-            color="primary" 
-          />
+          {!isCompleted && (
+            <ScoreCounter 
+              label={t.matches.active.yourScore} 
+              value={score1} 
+              onChange={(val) => {
+                setScore1(val);
+                setHasInteracted(true);
+              }} 
+              color="primary" 
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-8">
           <button 
-            onClick={() => { setScore1(7); setScore2(11); setHasInteracted(true); }}
-            className="text-right active:scale-95 transition-transform"
+            onClick={() => { if (!isCompleted) { setScore1(7); setScore2(11); setHasInteracted(true); } }}
+            className={`text-right transition-transform ${isCompleted ? 'cursor-default' : 'active:scale-95'}`}
           >
             <PlayerCard 
               player={player2!} 
@@ -400,15 +462,17 @@ function MatchPageContent() {
               alignRight 
             />
           </button>
-          <ScoreCounter 
-            label={t.matches.active.opponent} 
-            value={score2} 
-            onChange={(val) => {
-              setScore2(val);
-              setHasInteracted(true);
-            }} 
-            color="secondary" 
-          />
+          {!isCompleted && (
+            <ScoreCounter 
+              label={t.matches.active.opponent} 
+              value={score2} 
+              onChange={(val) => {
+                setScore2(val);
+                setHasInteracted(true);
+              }} 
+              color="secondary" 
+            />
+          )}
         </div>
       </div>
 
@@ -458,15 +522,32 @@ function MatchPageContent() {
         </div>
       </section>
       
-      <div className="fixed bottom-[62px] left-0 right-0 p-4 bg-[#121212] z-[90] max-w-md mx-auto shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-        <button 
-          onClick={handleFinishGame}
-          disabled={!isValidScore}
-          className="btn-primary w-full py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black uppercase"
-        >
-          {editingIndex !== null ? t.matches.active.updateGame : t.matches.active.saveGame}
-        </button>
-      </div>
+      {(!isCompleted) && (
+        <div className="fixed bottom-[62px] left-0 right-0 p-4 bg-[#121212] z-[90] max-w-md mx-auto shadow-[0_-10px_20px_rgba(0,0,0,0.5)] flex gap-3">
+          <button 
+            onClick={handleFinishGame}
+            disabled={!isValidScore}
+            className="btn-primary flex-1 py-5 text-xl tracking-tighter shadow-[0_0_30px_rgba(198,255,0,0.1)] disabled:opacity-20 disabled:grayscale disabled:shadow-none transition-all italic font-black uppercase"
+          >
+            {editingIndex !== null ? t.matches.active.updateGame : t.matches.active.saveGame}
+          </button>
+
+          <button
+            onClick={handleDeleteMatchCurrent}
+            className={`w-[72px] border rounded-[20px] flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(239,68,68,0.1)] active:scale-95 ${
+              isConfirmingDelete 
+                ? 'bg-red-500 text-white border-red-500' 
+                : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20'
+            }`}
+          >
+            {isConfirmingDelete ? (
+              <span className="text-[9px] px-1 text-center font-black uppercase leading-tight">Na pewno?</span>
+            ) : (
+              <Trash2 className="w-6 h-6" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Mobile Action Sheet */}
       {actionSheetIndex !== null && (

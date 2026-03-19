@@ -84,12 +84,25 @@ function MatchesListContent() {
 
   const handleDeleteMatch = async (matchId: string) => {
     try {
-      const { error } = await supabase.from('matches').delete().eq('id', matchId);
-      if (error) throw error;
+      console.log('History: Attempting to delete match with ID:', matchId);
+      
+      const { error: mError } = await supabase.from('matches').delete().eq('id', matchId);
+      
+      if (mError) {
+        if (mError.code === '23503') { // Foreign key constraint violation
+          const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
+          if (gError) throw gError;
+          const { error: mError2 } = await supabase.from('matches').delete().eq('id', matchId);
+          if (mError2) throw mError2;
+        } else {
+          throw mError;
+        }
+      }
+
       setMatches(prev => prev.filter(m => m.id !== matchId));
-    } catch (err) {
-      console.error('Error deleting match:', err);
-      alert(t.common.error);
+    } catch (err: any) {
+      console.error('Full delete error object from history:', err);
+      alert(`${t.common.error}: ${err.message || 'Błąd serwera'} (Kod: ${err.code || 'Brak'})`);
     }
   };
 
@@ -97,10 +110,7 @@ function MatchesListContent() {
     const date = new Date(isoString);
     return date.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { 
       day: '2-digit', 
-      month: 'short', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'short'
     });
   };
 
@@ -130,108 +140,66 @@ function MatchesListContent() {
         <div className="flex flex-col gap-5">
           <AnimatePresence initial={false}>
             {matches.map((match, idx) => (
-              <motion.div 
-                key={match.id || idx}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, x: 100 }}
-                className="relative"
-              >
-                {/* Delete Background */}
-                <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center justify-end pr-8 text-white">
-                  <Trash2 className="w-6 h-6 animate-pulse" />
-                </div>
-
-                <motion.div
-                  drag="x"
-                  dragConstraints={{ left: -100, right: 0 }}
-                  onDragEnd={(_, info) => {
-                    if (info.offset.x < -80) {
-                      handleDeleteMatch(match.id);
-                    }
-                  }}
-                  className="relative z-10"
+                <motion.div 
+                  key={match.id || idx}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, x: 100 }}
+                  className="relative group block"
                 >
-                  <div className="card p-4 sm:p-5 bg-accent/20 border-white/5 hover:border-primary/20 transition-all group overflow-hidden">
-                    <div className="flex justify-between items-start mb-5">
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted">
-                        <Calendar className="w-3 h-3 text-primary" />
+                  <Link href={`/matches/active?id=${match.id}`} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3 relative z-10">
+                    <div className="flex flex-col shrink-0 w-10">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted">
                         {formatDate(match.timestamp)}
-                      </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-center gap-3">
-                            <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20 text-[10px] font-black text-primary uppercase tracking-tighter">
-                              {t.matches.matchFinished}
-                            </div>
-                            {(() => {
-                              const isP1 = match.players[0].id === currentUser?.id;
-                              const userScore = isP1 ? match.score1 : match.score2;
-                              const oppScore = isP1 ? match.score2 : match.score1;
-                              if (userScore > oppScore) {
-                                return <Trophy className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />;
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        <Link 
-                          href={`/matches/active?id=${match.id}`}
-                          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted hover:text-primary transition-colors bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 active:scale-95"
-                        >
-                          <Pencil className="w-3 h-3" />
-                          {t.common.edit}
-                        </Link>
-                      </div>
+                      </span>
                     </div>
-
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 mb-5">
-                      <div className="flex flex-col gap-3 min-w-0">
-                        <PlayerCard 
-                          player={match.players[0]} 
-                          color="primary" 
-                          className="bg-transparent border-none p-0" 
-                          isMe={match.players[0].id === currentUser?.id}
-                          meLabel={t.common.ja}
-                        />
-                        <div className="text-3xl font-black font-barlow-condensed text-primary text-center">
-                          {match.score1}
+                    
+                    <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">
+                          {match.players[0].id === currentUser?.id ? t.common.ja : match.players[0].nickname}
+                        </span>
+                        <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
+                          {match.players[0].avatarUrl ? (
+                            <img src={match.players[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            (match.players[0].nickname?.[0] || '?').toUpperCase()
+                          )}
                         </div>
                       </div>
-
-                      <div className="flex flex-col items-center justify-center px-2">
-                        <span className="text-sm font-black text-muted uppercase tracking-widest italic opacity-20">VS</span>
+                      
+                      <div className="text-lg font-black font-barlow-condensed tracking-tighter flex items-center gap-1 shrink-0">
+                        <span className="text-primary">{match.score1}</span>
+                        <span className="opacity-20 text-xs">:</span>
+                        <span className="text-secondary">{match.score2}</span>
                       </div>
 
-                      <div className="flex flex-col gap-3 text-right min-w-0">
-                        <PlayerCard 
-                          player={match.players[1]} 
-                          color="secondary" 
-                          className="bg-transparent border-none p-0" 
-                          isMe={match.players[1].id === currentUser?.id}
-                          meLabel={t.common.ja}
-                          alignRight 
-                        />
-                        <div className="text-3xl font-black font-barlow-condensed text-secondary text-center">
-                          {match.score2}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[9px] font-black text-secondary overflow-hidden shrink-0">
+                          {match.players[1].avatarUrl ? (
+                            <img src={match.players[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            (match.players[1].nickname?.[0] || '?').toUpperCase()
+                          )}
                         </div>
+                        <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">
+                          {match.players[1].id === currentUser?.id ? t.common.ja : match.players[1].nickname}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5 flex flex-col gap-3">
-                      <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted italic">{t.matches.gamesLabel}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {match.games.map((game: any, i: number) => (
-                          <div key={i} className="px-3 py-2 bg-white/5 rounded-xl border border-white/5 text-xs font-bold font-barlow-condensed">
-                            <span className={game.p1 > game.p2 ? "text-primary" : ""}>{game.p1}</span>
-                            <span className="mx-1 opacity-30">:</span>
-                            <span className={game.p2 > game.p1 ? "text-secondary" : ""}>{game.p2}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                    {(() => {
+                      const isP1 = match.players[0].id === currentUser?.id;
+                      const userScore = isP1 ? match.score1 : match.score2;
+                      const oppScore = isP1 ? match.score2 : match.score1;
+                      if (userScore > oppScore) {
+                        return <Trophy className="w-6 h-6 text-primary shrink-0 self-center drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />;
+                      }
+                      return <div className="w-6 shrink-0" />; // Placeholder to maintain alignment
+                    })()}
+                  </Link>
                 </motion.div>
-              </motion.div>
             ))}
           </AnimatePresence>
         </div>

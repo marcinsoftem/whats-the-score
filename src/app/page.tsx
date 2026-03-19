@@ -65,7 +65,7 @@ function HomeContent() {
           .select('*, player1:player1_id(*), player2:player2_id(*), match_games(*)')
           .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
           .order('timestamp', { ascending: false })
-          .limit(10);
+          .limit(5);
 
         if (pError) throw pError;
         if (mError) throw mError;
@@ -293,22 +293,7 @@ function HomeContent() {
                   exit={{ opacity: 0, x: 100 }}
                   className="relative group"
                 >
-                  {/* Delete Background */}
-                  <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center justify-end pr-6 text-white overflow-hidden">
-                    <Trash2 className="w-5 h-5 animate-pulse" />
-                  </div>
-
-                  <motion.div
-                    drag="x"
-                    dragConstraints={{ left: -100, right: 0 }}
-                    onDragEnd={(_, info) => {
-                      if (info.offset.x < -80) {
-                        handleDeleteMatch(match.id);
-                      }
-                    }}
-                    className="relative z-10"
-                  >
-                    <Link href={`/matches/active?id=${match.id}`} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3">
+                  <Link href={`/matches/active?id=${match.id}`} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3 relative z-10">
                       <div className="flex flex-col shrink-0 w-10">
                         <span className="text-[9px] font-black uppercase tracking-widest text-muted">
                           {formatDate(match.timestamp)}
@@ -359,7 +344,6 @@ function HomeContent() {
                         return <div className="w-6 shrink-0" />; // Placeholder to maintain alignment
                       })()}
                     </Link>
-                  </motion.div>
                 </motion.div>
               ))}
             </AnimatePresence>
