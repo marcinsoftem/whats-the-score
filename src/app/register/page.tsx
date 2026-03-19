@@ -43,30 +43,25 @@ function RegisterContent() {
 
     // Check if nickname already exists
     try {
-      const { data: existingProfile, error: checkError } = await supabase
+      // Check if any REAL user already has this nickname
+      const { data: realProfiles, error: checkError } = await supabase
         .from('profiles')
-        .select('id, type')
-        .ilike('nickname', nickname)
-        .maybeSingle();
+        .select('id')
+        .eq('type', 'real')
+        .ilike('nickname', nickname);
 
-      if (checkError) {
-        console.warn('Error checking nickname availability:', checkError);
+      if (checkError) throw checkError;
+
+      if (realProfiles && realProfiles.length > 0) {
+        setError('Ten pseudonim jest już zajęty przez innego zarejestrowanego użytkownika.');
+        setLoading(false);
+        return;
       }
 
-      if (existingProfile) {
-         // If it's a real user, we can't take it
-         if (existingProfile.type === 'real') {
-           setError('Ten pseudonim jest już zajęty przez innego użytkownika.');
-           setLoading(false);
-           return;
-         }
-         // If it's a virtual user but we don't have matching invite_id, it's risky
-         if (existingProfile.type === 'virtual' && existingProfile.id !== inviteId) {
-           setError('Ten pseudonim jest zarezerwowany dla innego gracza wirtualnego.');
-           setLoading(false);
-           return;
-         }
-      }
+      // If we have an invite_id, we should also check if that nickname is already 
+      // taken by another virtual profile (though multiple virtual are allowed, 
+      // we only want to ensure no conflicts during conversion if needed).
+      // Actually, since virtual players can have same names, we just proceed.
     } catch (err) {
       console.error('Pre-registration check failed:', err);
     }

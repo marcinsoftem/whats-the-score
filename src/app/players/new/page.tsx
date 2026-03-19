@@ -135,6 +135,7 @@ function AddPlayerContent() {
           .from('profiles')
           .select('id')
           .eq('owner_id', currentUser.id === 'anon' ? null : currentUser.id)
+          .eq('type', 'virtual')
           .ilike('nickname', cleanNick)
           .maybeSingle();
 
