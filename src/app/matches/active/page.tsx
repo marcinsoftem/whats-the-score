@@ -245,10 +245,10 @@ function MatchPageContent() {
   };
 
   useEffect(() => {
-    if (isLoaded && !isSetup && hasInteracted && !isDeleting && !isDeletingRef.current) {
+    if (isLoaded && !isSetup && hasInteracted && !isDeleting && !isDeletingRef.current && (isPersisted || games.length > 0)) {
       saveMatchToDb();
     }
-  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser, hasInteracted, isCompleted, isDeleting]);
+  }, [isLoaded, isSetup, score1, score2, games, matchDate, player1, player2, currentUser, hasInteracted, isCompleted, isDeleting, isPersisted]);
 
   const p1Games = games.filter(g => g.p1 > g.p2).length;
   const p2Games = games.filter(g => g.p2 > g.p1).length;

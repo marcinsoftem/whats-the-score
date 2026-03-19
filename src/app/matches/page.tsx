@@ -134,7 +134,6 @@ function MatchesListContent() {
             <Trophy className="w-8 h-8 opacity-20" />
           </div>
           <p className="text-muted text-sm font-medium uppercase tracking-widest italic">{t.matches.noMatches}</p>
-          <Link href="/matches/active" className="btn-primary mt-4">{t.home.startMatch}</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-5">
