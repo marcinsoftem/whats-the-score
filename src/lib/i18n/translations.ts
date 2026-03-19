@@ -122,7 +122,10 @@ export const translations = {
       installPwa: "Zainstaluj aplikację",
       pwaIos: "iOS (Safari): Dotknij 'Udostępnij' i 'Do ekranu początkowego'",
       pwaAndroid: "Android (Chrome): Dotknij 'Menu' (trzy kropki) i 'Zainstaluj aplikację'",
-      pwaDesc: "Korzystaj z What's The Score? jak z natywnej aplikacji. Szybszy dostęp, brak pasków przeglądarki i lepsze doświadczenie."
+      pwaDesc: "Korzystaj z What's The Score? jak z natywnej aplikacji. Szybszy dostęp, brak pasków przeglądarki i lepsze doświadczenie.",
+      profile: "Twój profil",
+      saveProfile: "ZAPISZ PROFIL",
+      profileSaved: "Profil zaktualizowany!"
     },
     stats: {
       title: "Statystyki",
@@ -258,7 +261,10 @@ export const translations = {
       installPwa: "Install app",
       pwaIos: "iOS (Safari): Tap 'Share' and 'Add to Home Screen'",
       pwaAndroid: "Android (Chrome): Tap 'Menu' (three dots) and 'Install app'",
-      pwaDesc: "Use What's The Score? like a native app. Faster access, no browser bars, and better experience."
+      pwaDesc: "Use What's The Score? like a native app. Faster access, no browser bars, and better experience.",
+      profile: "Your profile",
+      saveProfile: "SAVE PROFILE",
+      profileSaved: "Profile updated!"
     },
     stats: {
       title: "Statistics",
