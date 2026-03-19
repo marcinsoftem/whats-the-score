@@ -168,7 +168,10 @@ function MatchPageContent() {
 
   // Save progress to Supabase and localStorage
   const saveMatchToDb = async () => {
-    if (!isLoaded || isSetup || !player1 || !player2) return;
+    if (!isLoaded || isSetup || !player1 || !player2 || isDeletingRef.current) {
+      if (isDeletingRef.current) console.log('Autosave: Blocked (Deleting match)');
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -188,6 +191,10 @@ function MatchPageContent() {
 
       console.log('Saving match to Supabase:', matchData);
 
+      if (isDeletingRef.current) {
+        console.warn('Autosave: Aborted before upsert');
+        return;
+      }
       const { error: matchError } = await supabase
         .from('matches')
         .upsert(matchData);
@@ -207,6 +214,10 @@ function MatchPageContent() {
           p2_score: isSwapped ? g.p1 : g.p2
         }));
 
+        if (isDeletingRef.current) {
+          console.warn('Autosave: Aborted before games insert');
+          return;
+        }
         const { error: gamesError } = await supabase
           .from('match_games')
           .insert(gamesData);
@@ -334,7 +345,9 @@ function MatchPageContent() {
       console.log('Match record deleted successfully');
       
       localStorage.removeItem('wts_active_match');
-      router.push('/');
+      
+      // Small delay before redirecting to ensure DB finished
+      setTimeout(() => router.push('/'), 300);
     } catch (err: any) {
       console.error('Full delete error:', err);
       alert(`BŁĄD USUWANIA: ${err.message || 'Błąd serwera'}\nID: ${matchId}\nKod: ${err.code || '?'}`);

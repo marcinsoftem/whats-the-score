@@ -3,11 +3,14 @@ import { Home as HomeIcon, Trophy, Users, User as UserIcon } from "lucide-react"
 import Link from "next/link";
 import "./globals.css";
 
+export const viewport = {
+  themeColor: "#C6FF00",
+};
+
 export const metadata: Metadata = {
   title: "What's the Score? | WTS",
   description: "Track your squash match results with ease.",
   manifest: "/manifest.json",
-  themeColor: "#C6FF00",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
