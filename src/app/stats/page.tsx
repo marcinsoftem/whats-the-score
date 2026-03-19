@@ -18,8 +18,14 @@ export default function StatsPage() {
 
 function StatsContent() {
   const { t } = useLanguage();
+  const [allMatches, setAllMatches] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<'all' | 'year' | 'month'>('all');
+  const [selectedOpponentId, setSelectedOpponentId] = useState<string>('all');
+  const [opponents, setOpponents] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
   const supabase = createClient();
 
   useEffect(() => {
@@ -27,47 +33,27 @@ function StatsContent() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        setCurrentUser(user);
 
         const { data: matches, error } = await supabase
           .from('matches')
-          .select('*')
+          .select('*, player1:player1_id(id, nickname, avatar_url), player2:player2_id(id, nickname, avatar_url)')
           .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
           .order('timestamp', { ascending: false });
 
         if (error) throw error;
-
-        if (matches && matches.length > 0) {
-          let wins = 0;
-          let losses = 0;
-          let totalPoints = 0;
-          let opponentPoints = 0;
-
-          const recentPerformance = matches.slice(0, 10).map((m: any) => {
-            const isP1 = m.player1_id === user.id;
-            const userScore = isP1 ? m.score1 : m.score2;
-            const oppScore = isP1 ? m.score2 : m.score1;
-            
-            if (userScore > oppScore) wins++;
-            else if (oppScore > userScore) losses++;
-            
-            totalPoints += userScore;
-            opponentPoints += oppScore;
-
-            return {
-              userScore,
-              oppScore,
-              win: userScore > oppScore
-            };
-          }).reverse();
-
-          setStats({
-            total: matches.length,
-            wins,
-            losses,
-            winRate: Math.round((wins / matches.length) * 100),
-            avgPoints: (totalPoints / matches.length).toFixed(1),
-            recentPerformance
+        if (matches) {
+          setAllMatches(matches);
+          
+          // Extract unique opponents
+          const oppsMap = new Map();
+          matches.forEach(m => {
+            const opp = m.player1_id === user.id ? m.player2 : m.player1;
+            if (opp && !oppsMap.has(opp.id)) {
+              oppsMap.set(opp.id, opp);
+            }
           });
+          setOpponents(Array.from(oppsMap.values()));
         }
       } catch (err) {
         console.error('Error fetching stats:', err);
@@ -78,6 +64,69 @@ function StatsContent() {
 
     fetchStats();
   }, [supabase]);
+
+  useEffect(() => {
+    if (allMatches.length === 0 || !currentUser) return;
+
+    let filtered = [...allMatches];
+
+    // Apply Time Filter
+    if (timeFilter !== 'all') {
+      const now = new Date();
+      const cutoff = new Date();
+      if (timeFilter === 'month') cutoff.setMonth(now.getMonth() - 1);
+      if (timeFilter === 'year') cutoff.setFullYear(now.getFullYear() - 1);
+      
+      filtered = filtered.filter(m => new Date(m.timestamp) >= cutoff);
+    }
+
+    // Apply Player Filter
+    if (selectedOpponentId !== 'all') {
+      filtered = filtered.filter(m => 
+        m.player1_id === selectedOpponentId || m.player2_id === selectedOpponentId
+      );
+    }
+
+    if (filtered.length > 0) {
+      let wins = 0;
+      let losses = 0;
+      let totalGamesWon = 0;
+      let totalGamesPlayed = 0;
+
+      const recentPerformance = filtered.slice(0, 10).map((m: any) => {
+        const isP1 = m.player1_id === currentUser.id;
+        const userScore = Number(isP1 ? m.score1 : m.score2) || 0;
+        const oppScore = Number(isP1 ? m.score2 : m.score1) || 0;
+        
+        if (userScore > oppScore) wins++;
+        else if (oppScore > userScore) losses++;
+        
+        totalGamesWon += userScore;
+        totalGamesPlayed += (userScore + oppScore);
+
+        const matchTotalGames = userScore + oppScore;
+        const matchWinRate = matchTotalGames > 0 ? (userScore / matchTotalGames) * 100 : 0;
+
+        return {
+          userScore,
+          oppScore,
+          matchWinRate: isNaN(matchWinRate) ? 0 : matchWinRate,
+          win: userScore > oppScore
+        };
+      }).reverse();
+
+      setStats({
+        total: filtered.length,
+        wins,
+        losses,
+        winRate: Math.round((wins / filtered.length) * 100),
+        gameWinRate: totalGamesPlayed > 0 ? Math.round((totalGamesWon / totalGamesPlayed) * 100) : 0,
+        recentPerformance
+      });
+    } else {
+      setStats(null);
+    }
+  }, [allMatches, timeFilter, selectedOpponentId, currentUser]);
 
   if (loading) {
     return (
@@ -109,16 +158,80 @@ function StatsContent() {
 
   return (
     <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen">
-      <header className="flex items-center gap-4">
-        <Link 
-          href="/"
-          className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </Link>
-        <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
-          {t.stats.title}
-        </h1>
+      <header className="flex flex-col gap-6">
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/"
+            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </Link>
+          <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
+            {t.stats.title}
+          </h1>
+        </div>
+
+        {/* Time Filter */}
+        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 relative">
+          {(['all', 'year', 'month'] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setTimeFilter(filter)}
+              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all relative z-10 ${
+                timeFilter === filter ? 'text-background' : 'text-muted hover:text-foreground'
+              }`}
+            >
+              {filter === 'all' ? 'Wszystko' : filter === 'year' ? 'Rok' : 'Miesiąc'}
+              {timeFilter === filter && (
+                <motion.div
+                  layoutId="activeFilter"
+                  className="absolute inset-0 bg-primary rounded-xl -z-10 shadow-[0_0_15px_rgba(198,255,0,0.3)]"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Player Filter */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted px-2">Przeciwnik</span>
+          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar px-1">
+            <button
+              onClick={() => setSelectedOpponentId('all')}
+              className={`flex flex-col items-center gap-2 min-w-[60px] transition-all ${
+                selectedOpponentId === 'all' ? 'scale-110' : 'opacity-40 grayscale'
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
+                selectedOpponentId === 'all' ? 'border-primary bg-primary/20' : 'border-white/10 bg-white/5'
+              }`}>
+                <Activity className="w-5 h-5" />
+              </div>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Wszyscy</span>
+            </button>
+            {opponents.map((opp) => (
+              <button
+                key={opp.id}
+                onClick={() => setSelectedOpponentId(opp.id)}
+                className={`flex flex-col items-center gap-2 min-w-[60px] transition-all ${
+                  selectedOpponentId === opp.id ? 'scale-110' : 'opacity-40 grayscale'
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-full border-2 overflow-hidden ${
+                  selectedOpponentId === opp.id ? 'border-primary bg-primary/20' : 'border-white/10 bg-white/5'
+                }`}>
+                  {opp.avatar_url ? (
+                    <img src={opp.avatar_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-black text-sm">{opp.nickname[0]}</div>
+                  )}
+                </div>
+                <span className="text-[8px] font-bold uppercase tracking-tighter truncate w-full text-center">{opp.nickname}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-4">
@@ -142,8 +255,8 @@ function StatsContent() {
           <span className="text-xl font-bold text-red-500 font-barlow-condensed">{stats.losses}</span>
         </div>
         <div className="card p-4 bg-white/5 border-white/5 text-center">
-          <span className="text-[8px] font-black uppercase tracking-widest text-muted block mb-1">{t.stats.avgPoints}</span>
-          <span className="text-xl font-bold text-primary font-barlow-condensed">{stats.avgPoints}</span>
+          <span className="text-[8px] font-black uppercase tracking-widest text-muted block mb-1">Gemy %</span>
+          <span className="text-xl font-bold text-primary font-barlow-condensed">{stats.gameWinRate}%</span>
         </div>
       </div>
 
@@ -199,8 +312,8 @@ function StatsContent() {
           </h2>
         </div>
         <div className="card p-6 bg-accent/10 border-white/5 relative overflow-hidden group">
-          <div className="h-40 w-full relative pt-4">
-            <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+          <div className="h-40 w-full relative pt-4 ml-2">
+            <svg viewBox="-12 0 112 40" className="w-full h-full overflow-visible" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
@@ -208,31 +321,55 @@ function StatsContent() {
                 </linearGradient>
               </defs>
               
-              {/* Baseline and grid lines */}
-              <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" strokeWidth="0.1" className="text-white/10" />
-              <line x1="0" y1="20" x2="100" y2="20" stroke="currentColor" strokeWidth="0.1" className="text-white/10" strokeDasharray="1,1" />
-              <line x1="0" y1="40" x2="100" y2="40" stroke="currentColor" strokeWidth="0.2" className="text-white/20" />
+              {/* Y-Axis Labels and Grid Lines (0-100%) */}
+              {[0, 25, 50, 75, 100].map((val) => {
+                const y = 40 - (val / 100) * 40;
+                return (
+                  <g key={val} className="text-white/20">
+                    <text 
+                      x="-10" 
+                      y={y} 
+                      className="fill-muted text-[3px] font-bold" 
+                      dominantBaseline="middle"
+                    >
+                      {val}%
+                    </text>
+                    <line 
+                      x1="0" 
+                      y1={y} 
+                      x2="100" 
+                      y2={y} 
+                      stroke="currentColor" 
+                      strokeWidth={val === 0 || val === 100 ? "0.2" : "0.1"} 
+                      strokeDasharray={val === 0 || val === 100 ? "" : "1,1"} 
+                    />
+                  </g>
+                );
+              })}
 
               {(() => {
                 const data = stats.recentPerformance;
                 const points = data.map((d: any, i: number) => {
                   const x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50;
-                  const y = 40 - (d.userScore / 3) * 40; // Max 3 games
+                  const winRate = Number(d.matchWinRate) || 0;
+                  const y = 40 - (winRate / 100) * 40; 
                   return `${x},${y}`;
                 });
                 const pathData = `M ${points.join(' L ')}`;
-                const areaData = `${pathData} L 100,40 L 0,40 Z`;
+                const areaData = data.length > 0 ? `${pathData} L 100,40 L 0,40 Z` : "";
 
                 return (
                   <>
                     {/* Area fill */}
-                    <motion.path
-                      d={areaData}
-                      fill="url(#lineGradient)"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                    />
+                    {areaData && (
+                      <motion.path
+                        d={areaData}
+                        fill="url(#lineGradient)"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                      />
+                    )}
                     
                     {/* The Line */}
                     <motion.path
@@ -251,7 +388,8 @@ function StatsContent() {
                     {/* Data Points */}
                     {data.map((d: any, i: number) => {
                       const x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50;
-                      const y = 40 - (d.userScore / 3) * 40;
+                      const winRate = Number(d.matchWinRate) || 0;
+                      const y = 40 - (winRate / 100) * 40;
                       return (
                         <motion.circle
                           key={i}
