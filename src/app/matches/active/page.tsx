@@ -316,26 +316,28 @@ function MatchPageContent() {
       
       console.log('Match Detail: Explicitly deleting match with ID:', matchId);
       
-      // Try to delete from matches only (expecting cascade). 
-      // If it fails with constraint error, we delete games first.
-      const { error: mError } = await supabase.from('matches').delete().eq('id', matchId);
-      
-      if (mError) {
-        if (mError.code === '23503') { // Foreign key constraint violation
-          const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
-          if (gError) throw gError;
-          const { error: mError2 } = await supabase.from('matches').delete().eq('id', matchId);
-          if (mError2) throw mError2;
-        } else {
-          throw mError;
-        }
+      // Step 1: Verification
+      const { data: check, error: checkError } = await supabase.from('matches').select('id').eq('id', matchId).maybeSingle();
+      if (checkError) console.error('Verification error:', checkError);
+      if (!check) {
+        throw new Error(`Nie znaleziono meczu w bazie danych (MatchID: ${matchId.substring(0,8)})`);
       }
+
+      // Step 2: Delete Games
+      const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
+      if (gError) throw gError;
+      console.log('Games deleted successfully');
+
+      // Step 3: Delete Match
+      const { error: mError } = await supabase.from('matches').delete().eq('id', matchId);
+      if (mError) throw mError;
+      console.log('Match record deleted successfully');
       
       localStorage.removeItem('wts_active_match');
       router.push('/');
     } catch (err: any) {
-      console.error('Full delete error object:', err);
-      alert(`Błąd usuwania: ${err.message || 'Błąd serwera'} (MatchID: ${matchId.substring(0, 8)}... Code: ${err.code || '?'})`);
+      console.error('Full delete error:', err);
+      alert(`BŁĄD USUWANIA: ${err.message || 'Błąd serwera'}\nID: ${matchId}\nKod: ${err.code || '?'}`);
       setIsDeleting(false);
       isDeletingRef.current = false;
       setIsSaving(false);
