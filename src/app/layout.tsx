@@ -17,13 +17,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Server-side check
-  console.log('Server-side Supabase check:', {
-    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    urlLength: (process.env.NEXT_PUBLIC_SUPABASE_URL || '').length
-  });
-
   return (
     <html lang="pl">
       <body className="antialiased min-h-screen pb-20">
