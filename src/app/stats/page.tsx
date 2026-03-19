@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Preloader } from "@/components/ui/Preloader";
 
 export default function StatsPage() {
   return (
@@ -129,11 +130,7 @@ function StatsContent() {
   }, [allMatches, timeFilter, selectedOpponentId, currentUser]);
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <Preloader />;
   }
 
   if (!stats) {

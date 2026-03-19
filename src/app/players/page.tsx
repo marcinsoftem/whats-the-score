@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
 
+import { Preloader } from "@/components/ui/Preloader";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function PlayersPage() {
@@ -161,7 +162,7 @@ function PlayersPageContent() {
     p.nickname.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return <Preloader />;
 
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-md mx-auto relative min-h-screen">

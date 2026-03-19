@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient, isConfigured } from "@/lib/supabase/client";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Preloader } from "@/components/ui/Preloader";
 
 function AddPlayerContent() {
   const { t } = useLanguage();
@@ -323,11 +324,7 @@ function AddPlayerContent() {
 export default function AddPlayerPage() {
   return (
     <AuthGuard>
-      <Suspense fallback={
-        <div className="flex items-center justify-center p-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      }>
+      <Suspense fallback={<Preloader />}>
         <AddPlayerContent />
       </Suspense>
     </AuthGuard>

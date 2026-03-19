@@ -294,15 +294,15 @@ function HomeContent() {
                   className="relative group"
                 >
                   {/* Delete Background */}
-                  <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center pl-6 text-white overflow-hidden">
+                  <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center justify-end pr-6 text-white overflow-hidden">
                     <Trash2 className="w-5 h-5 animate-pulse" />
                   </div>
 
                   <motion.div
                     drag="x"
-                    dragConstraints={{ left: 0, right: 100 }}
+                    dragConstraints={{ left: -100, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x > 80) {
+                      if (info.offset.x < -80) {
                         handleDeleteMatch(match.id);
                       }
                     }}

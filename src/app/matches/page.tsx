@@ -9,6 +9,7 @@ import { PlayerCard } from "@/components/player/PlayerCard";
 import { createClient } from "@/lib/supabase/client";
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Preloader } from "@/components/ui/Preloader";
 
 export default function MatchesPage() {
   return (
@@ -103,7 +104,7 @@ function MatchesListContent() {
     });
   };
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return <Preloader />;
 
   return (
     <div className="flex flex-col gap-8">
@@ -138,15 +139,15 @@ function MatchesListContent() {
                 className="relative"
               >
                 {/* Delete Background */}
-                <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center pl-8 text-white">
+                <div className="absolute inset-0 bg-red-500 rounded-2xl flex items-center justify-end pr-8 text-white">
                   <Trash2 className="w-6 h-6 animate-pulse" />
                 </div>
 
                 <motion.div
                   drag="x"
-                  dragConstraints={{ left: 0, right: 100 }}
+                  dragConstraints={{ left: -100, right: 0 }}
                   onDragEnd={(_, info) => {
-                    if (info.offset.x > 80) {
+                    if (info.offset.x < -80) {
                       handleDeleteMatch(match.id);
                     }
                   }}
