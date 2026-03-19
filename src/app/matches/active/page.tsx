@@ -54,6 +54,7 @@ function MatchPageContent() {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isDeletingRef = useRef(false);
+  const saveInProgressRef = useRef(false);
 
   const supabase = createClient();
 
@@ -174,6 +175,7 @@ function MatchPageContent() {
     }
 
     try {
+      saveInProgressRef.current = true;
       setIsSaving(true);
       setSaveError(null);
       const isSwapped = player1?.id !== currentUser?.id && player2?.id === currentUser?.id;
@@ -233,6 +235,7 @@ function MatchPageContent() {
       setSaveError(`${err.message}${err.hint ? ` (Hint: ${err.hint})` : ''}${err.details ? ` [${err.details}]` : ''}` || t.matches.active.syncError);
     } finally {
       setIsSaving(false);
+      saveInProgressRef.current = false;
     }
   };
 
@@ -323,6 +326,15 @@ function MatchPageContent() {
       isDeletingRef.current = true;
       setIsDeleting(true);
       setHasInteracted(false); 
+      
+      // Wait for any concurrent saveMatchToDb to finish completely 
+      // BEFORE we actually issue the DELETE commands.
+      // This prevents the autosave from finishing its upsert AFTER we delete the record.
+      console.log('Match Detail: Waiting for any pending saves to complete...');
+      while (saveInProgressRef.current) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+      
       setIsSaving(true);
       
       console.log('Match Detail: Explicitly deleting match with ID:', matchId);
