@@ -1,15 +1,15 @@
 "use client"
  
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
  
 export function Preloader() {
-  const barVariants = {
+  const barVariants: Variants = {
     animate: (i: number) => ({
       scaleY: [0.5, 1.5, 0.5],
       transition: {
         duration: 1,
-        repeat: Infinity,
-        ease: "easeInOut",
+        repeat: Infinity as any,
+        ease: "easeInOut" as any,
         delay: i * 0.15
       }
     })
