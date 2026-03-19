@@ -1,7 +1,7 @@
 "use client"
 
 import AuthGuard from "@/components/auth/AuthGuard";
-import { ChevronLeft, Globe, Info, LogOut, Check } from "lucide-react";
+import { ChevronLeft, Globe, Info, LogOut, Check, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -79,6 +79,32 @@ function SettingsContent() {
                 {language === lang.code && <Check className="w-5 h-5 text-primary" />}
               </button>
             ))}
+          </div>
+        </section>
+
+        {/* PWA Section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 px-2">
+            <Smartphone className="w-5 h-5 text-primary" />
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted">
+              {t.settings.installPwa}
+            </h2>
+          </div>
+          <div className="card p-6 bg-primary/5 border-primary/10 flex flex-col gap-5">
+            <p className="text-sm text-muted/80 leading-relaxed font-medium">
+              {t.settings.pwaDesc}
+            </p>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">iOS / Safari</span>
+                <p className="text-sm text-foreground font-bold">{t.settings.pwaIos}</p>
+              </div>
+              <div className="w-full h-px bg-white/5" />
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-secondary italic">Android / Chrome</span>
+                <p className="text-sm text-foreground font-bold">{t.settings.pwaAndroid}</p>
+              </div>
+            </div>
           </div>
         </section>
 

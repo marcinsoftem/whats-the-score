@@ -119,6 +119,10 @@ export const translations = {
       version: "Wersja",
       logout: "Wyloguj się",
       logoutConfirm: "Czy na pewno chcesz się wylogować?",
+      installPwa: "Zainstaluj aplikację",
+      pwaIos: "iOS (Safari): Dotknij 'Udostępnij' i 'Do ekranu początkowego'",
+      pwaAndroid: "Android (Chrome): Dotknij 'Menu' (trzy kropki) i 'Zainstaluj aplikację'",
+      pwaDesc: "Korzystaj z What's The Score? jak z natywnej aplikacji. Szybszy dostęp, brak pasków przeglądarki i lepsze doświadczenie."
     },
     stats: {
       title: "Statystyki",
@@ -251,6 +255,10 @@ export const translations = {
       version: "Version",
       logout: "Log out",
       logoutConfirm: "Are you sure you want to log out?",
+      installPwa: "Install app",
+      pwaIos: "iOS (Safari): Tap 'Share' and 'Add to Home Screen'",
+      pwaAndroid: "Android (Chrome): Tap 'Menu' (three dots) and 'Install app'",
+      pwaDesc: "Use What's The Score? like a native app. Faster access, no browser bars, and better experience."
     },
     stats: {
       title: "Statistics",

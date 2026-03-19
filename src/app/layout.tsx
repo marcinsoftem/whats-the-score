@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 
 import Navbar from "@/components/layout/Navbar";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { PwaPrompt } from "@/components/ui/PwaPrompt";
 
 export default function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default function RootLayout({
             {children}
           </main>
           
+          <PwaPrompt />
           <Navbar />
         </LanguageProvider>
       </body>
