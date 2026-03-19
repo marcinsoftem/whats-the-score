@@ -36,7 +36,7 @@ function HomeContent() {
       // 1. Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      
+
       const userPlayer = {
         id: user.id,
         nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Ty',
@@ -54,17 +54,18 @@ function HomeContent() {
           .from('user_favorites')
           .select('profile_id')
           .eq('user_id', user.id);
-        
+
         const favIds = (favorites || []).map(f => f.profile_id);
 
         const { data: profiles, error: pError } = await supabase.from('profiles').select('*');
-        
+
         // Filter by current user
         const { data: dbMatches, error: mError } = await supabase
           .from('matches')
           .select('*, player1:player1_id(*), player2:player2_id(*), match_games(*)')
           .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
           .order('timestamp', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(5);
 
         if (pError) throw pError;
@@ -76,7 +77,7 @@ function HomeContent() {
             .filter(p => {
               const pNickLower = (p.nickname || '').trim().toLowerCase();
               if (p.id === userPlayer.id || pNickLower === userNickLower) return false;
-              
+
               // ONLY SHOW FAVORITES ON HOME PAGE
               if (!favIds.includes(p.id)) return false;
 
@@ -97,14 +98,14 @@ function HomeContent() {
           const formattedMatches = dbMatches
             .map(m => {
               const shouldSwap = m.player2_id === user.id;
-              
+
               const games = (m.match_games || [])
                 .sort((a: any, b: any) => a.game_index - b.game_index)
-                .map((g: any) => ({ 
-                  p1: shouldSwap ? g.p2_score : g.p1_score, 
-                  p2: shouldSwap ? g.p1_score : g.p2_score 
+                .map((g: any) => ({
+                  p1: shouldSwap ? g.p2_score : g.p1_score,
+                  p2: shouldSwap ? g.p1_score : g.p2_score
                 }));
-              
+
               return {
                 id: m.id,
                 timestamp: m.timestamp,
@@ -164,8 +165,8 @@ function HomeContent() {
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleDateString('pl-PL', { 
-      day: '2-digit', 
+    return date.toLocaleDateString('pl-PL', {
+      day: '2-digit',
       month: 'short'
     });
   };
@@ -181,8 +182,8 @@ function HomeContent() {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex flex-col gap-1 items-center justify-center text-center">
-            <span className="text-xs font-black uppercase text-red-500 italic">{t.home.dbError}</span>
-            <p className="text-[10px] text-red-500/70">{error}</p>
+          <span className="text-xs font-black uppercase text-red-500 italic">{t.home.dbError}</span>
+          <p className="text-[10px] text-red-500/70">{error}</p>
         </div>
       )}
 
@@ -198,21 +199,19 @@ function HomeContent() {
               )}
             </div>
           </div>
-          
+
           <div className="flex gap-4 overflow-x-auto pb-4 px-1 no-scrollbar -mx-4 scroll-px-4">
             {availablePlayers.map((player) => (
               <button
                 key={player.id}
                 onClick={() => setOpponentId(player.id)}
-                className={`flex flex-col items-center gap-3 min-w-[70px] transition-all duration-300 ${
-                  opponentId === player.id ? 'scale-110' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'
-                }`}
+                className={`flex flex-col items-center gap-3 min-w-[70px] transition-all duration-300 ${opponentId === player.id ? 'scale-110' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'
+                  }`}
               >
-                <div className={`w-14 h-14 rounded-full border-2 p-0.5 transition-all duration-300 relative ${
-                  opponentId === player.id 
-                    ? 'border-secondary shadow-[0_0_15px_rgba(255,87,34,0.3)] bg-secondary/10' 
+                <div className={`w-14 h-14 rounded-full border-2 p-0.5 transition-all duration-300 relative ${opponentId === player.id
+                    ? 'border-secondary shadow-[0_0_15px_rgba(255,87,34,0.3)] bg-secondary/10'
                     : 'border-white/10 bg-white/5'
-                }`}>
+                  }`}>
                   <div className="w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
                     {player.avatarUrl ? (
                       <img src={player.avatarUrl} alt={player.nickname} className="w-full h-full object-cover" />
@@ -224,15 +223,14 @@ function HomeContent() {
                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-background animate-in zoom-in duration-300 shadow-lg" />
                   )}
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-tighter truncate w-full text-center transition-colors ${
-                  opponentId === player.id ? 'text-secondary' : 'text-muted'
-                }`}>
+                <span className={`text-[10px] font-black uppercase tracking-tighter truncate w-full text-center transition-colors ${opponentId === player.id ? 'text-secondary' : 'text-muted'
+                  }`}>
                   {player.nickname}
                 </span>
               </button>
             ))}
-            
-            <Link 
+
+            <Link
               href="/players/new?from=home"
               className="flex flex-col items-center gap-3 min-w-[70px] opacity-40 hover:opacity-100 transition-opacity"
             >
@@ -255,7 +253,7 @@ function HomeContent() {
         )}
 
         <div className="relative">
-          <button 
+          <button
             onClick={handleNewMatch}
             disabled={!opponentId}
             className="btn-primary w-full py-6 text-2xl shadow-[0_10px_30px_rgba(198,255,0,0.2)] active:scale-[0.98] transition-all group disabled:opacity-20 disabled:grayscale disabled:shadow-none relative z-10"
@@ -263,7 +261,7 @@ function HomeContent() {
             <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
             {t.home.startMatch.toUpperCase()}
           </button>
-          
+
           {opponentId && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 blur-2xl -z-0 rounded-full animate-pulse" />
           )}
@@ -275,7 +273,7 @@ function HomeContent() {
           <h2 className="text-lg font-black uppercase tracking-tighter italic">{t.home.recentMatches}</h2>
           <Link href="/matches" className="text-primary text-[10px] uppercase font-black tracking-widest hover:underline">{t.home.viewHistory}</Link>
         </div>
-        
+
         {matches.length === 0 ? (
           <div className="card flex flex-col gap-4 items-center justify-center py-12 text-center bg-accent/10 border-dashed border-white/10 opacity-50">
             <Trophy className="w-10 h-10 text-muted opacity-20" />
@@ -285,7 +283,7 @@ function HomeContent() {
           <div className="flex flex-col gap-4">
             <AnimatePresence initial={false}>
               {matches.map((match, idx) => (
-                <motion.div 
+                <motion.div
                   key={match.id || idx}
                   layout
                   initial={{ opacity: 0, x: -20 }}
@@ -294,56 +292,56 @@ function HomeContent() {
                   className="relative group"
                 >
                   <Link href={`/matches/active?id=${match.id}`} className="card p-3 px-4 bg-accent/20 border-white/5 hover:border-primary/20 transition-all active:scale-[0.98] flex items-center justify-between gap-3 relative z-10">
-                      <div className="flex flex-col shrink-0 w-10">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted">
-                          {formatDate(match.timestamp)}
+                    <div className="flex flex-col shrink-0 w-10">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted">
+                        {formatDate(match.timestamp)}
+                      </span>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">
+                          {match.players[0].id === currentUser?.id ? t.common.ja : match.players[0].nickname}
+                        </span>
+                        <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
+                          {match.players[0].avatarUrl ? (
+                            <img src={match.players[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            (match.players[0].nickname?.[0] || '?').toUpperCase()
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-lg font-black font-barlow-condensed tracking-tighter flex items-center gap-1 shrink-0">
+                        <span className="text-primary">{match.score1}</span>
+                        <span className="opacity-20 text-xs">:</span>
+                        <span className="text-secondary">{match.score2}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[9px] font-black text-secondary overflow-hidden shrink-0">
+                          {match.players[1].avatarUrl ? (
+                            <img src={match.players[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            (match.players[1].nickname?.[0] || '?').toUpperCase()
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">
+                          {match.players[1].id === currentUser?.id ? t.common.ja : match.players[1].nickname}
                         </span>
                       </div>
-                      
-                      <div className="flex-1 flex items-center justify-center gap-2 overflow-hidden">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold uppercase truncate max-w-[50px] text-right">
-                            {match.players[0].id === currentUser?.id ? t.common.ja : match.players[0].nickname}
-                          </span>
-                          <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[9px] font-black text-primary overflow-hidden shrink-0">
-                            {match.players[0].avatarUrl ? (
-                              <img src={match.players[0].avatarUrl} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              (match.players[0].nickname?.[0] || '?').toUpperCase()
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="text-lg font-black font-barlow-condensed tracking-tighter flex items-center gap-1 shrink-0">
-                          <span className="text-primary">{match.score1}</span>
-                          <span className="opacity-20 text-xs">:</span>
-                          <span className="text-secondary">{match.score2}</span>
-                        </div>
+                    </div>
 
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-[9px] font-black text-secondary overflow-hidden shrink-0">
-                            {match.players[1].avatarUrl ? (
-                              <img src={match.players[1].avatarUrl} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              (match.players[1].nickname?.[0] || '?').toUpperCase()
-                            )}
-                          </div>
-                          <span className="text-[10px] font-bold uppercase truncate max-w-[50px]">
-                            {match.players[1].id === currentUser?.id ? t.common.ja : match.players[1].nickname}
-                          </span>
-                        </div>
-                      </div>
-
-                      {(() => {
-                        const isP1 = match.players[0].id === currentUser?.id;
-                        const userScore = isP1 ? match.score1 : match.score2;
-                        const oppScore = isP1 ? match.score2 : match.score1;
-                        if (userScore > oppScore) {
-                          return <Trophy className="w-6 h-6 text-primary shrink-0 self-center drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />;
-                        }
-                        return <div className="w-6 shrink-0" />; // Placeholder to maintain alignment
-                      })()}
-                    </Link>
+                    {(() => {
+                      const isP1 = match.players[0].id === currentUser?.id;
+                      const userScore = isP1 ? match.score1 : match.score2;
+                      const oppScore = isP1 ? match.score2 : match.score1;
+                      if (userScore > oppScore) {
+                        return <Trophy className="w-6 h-6 text-primary shrink-0 self-center drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />;
+                      }
+                      return <div className="w-6 shrink-0" />; // Placeholder to maintain alignment
+                    })()}
+                  </Link>
                 </motion.div>
               ))}
             </AnimatePresence>

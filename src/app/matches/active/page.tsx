@@ -533,11 +533,11 @@ function MatchPageContent() {
             games.map((game, i) => (
               <button 
                 key={i} 
-                onClick={() => setActionSheetIndex(i)}
+                onClick={() => !isCompleted && setActionSheetIndex(i)}
                 className={`card min-w-[140px] flex flex-col items-center gap-1 py-4 px-4 border transition-all text-center relative ${
                   editingIndex === i 
                     ? "bg-primary/5 border-primary shadow-[0_0_15px_rgba(198,255,0,0.1)] ring-1 ring-primary/20" 
-                    : "bg-white/5 border-white/5 hover:border-primary/30 active:scale-95"
+                    : `bg-white/5 border-white/5 ${isCompleted ? 'opacity-80 cursor-default' : 'hover:border-primary/30 active:scale-95'}`
                 }`}
               >
                 <span className={`text-[9px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>

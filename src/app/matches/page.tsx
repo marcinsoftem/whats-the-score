@@ -40,7 +40,8 @@ function MatchesListContent() {
           .from('matches')
           .select('*, player1:player1_id(*), player2:player2_id(*), match_games(*)')
           .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
-          .order('timestamp', { ascending: false });
+          .order('timestamp', { ascending: false })
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
 
