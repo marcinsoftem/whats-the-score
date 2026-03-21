@@ -300,7 +300,7 @@ function StatsContent() {
           <span className="text-xl font-bold text-red-500 font-barlow-condensed">{stats.losses}</span>
         </div>
         <div className="card p-4 bg-white/5 border-white/5 text-center">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted block mb-1">Gemy %</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted block mb-1">Sety %</span>
           <span className="text-xl font-bold text-primary font-barlow-condensed">{stats.gameWinRate}%</span>
         </div>
       </div>

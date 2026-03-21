@@ -624,7 +624,7 @@ function MatchPageContent() {
                 }`}
               >
                 <span className={`text-[11px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>
-                  Gem {i+1} {editingIndex === i && `(${t.common.edit.toUpperCase()})`}
+                  Set {i+1} {editingIndex === i && `(${t.common.edit.toUpperCase()})`}
                 </span>
                 <span className="text-2xl font-bold font-barlow-condensed tracking-wider text-foreground">
                   <span className={game.p1 > game.p2 ? "text-primary" : ""}>{game.p1}</span>
@@ -692,11 +692,11 @@ function MatchPageContent() {
               
               <div className="space-y-3">
                 <h3 className="text-2xl font-black uppercase italic tracking-tighter">
-                  {matchTournamentId ? "Zresetuj mecz" : "Usuń mecz"}
+                  {matchTournamentId ? "Zresetuj wyniki" : "Usuń mecz"}
                 </h3>
                 <p className="text-muted text-sm font-medium leading-relaxed">
                   {matchTournamentId 
-                    ? "Czy na pewno chcesz usunąć wyniki tego meczu turniejowego? Mecz powróci do puli gier do rozegrania."
+                    ? "Czy na pewno chcesz usunąć wyniki tego meczu turniejowego? Mecz powróci do puli setów do rozegrania."
                     : "Czy na pewno chcesz całkowicie usunąć ten mecz? Ta operacja jest nieodwracalna."}
                 </p>
               </div>
