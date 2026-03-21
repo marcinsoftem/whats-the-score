@@ -246,6 +246,7 @@ function HomeContent() {
     });
   };
 
+
   if (!isLoaded) return <Preloader />;
 
   const isTournamentMode = selectedIds.length >= 2;
@@ -320,12 +321,12 @@ function HomeContent() {
 
             <Link
               href="/players/new?from=home"
-              className="flex flex-col items-center gap-3 min-w-[70px] opacity-40 hover:opacity-100 transition-opacity"
+              className="flex flex-col items-center gap-3 min-w-[70px] shrink-0 opacity-40 hover:opacity-100 transition-opacity"
             >
               <div className="w-14 h-14 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 group hover:border-primary transition-colors">
                 <Plus className="w-6 h-6 text-muted group-hover:text-primary transition-colors" />
               </div>
-              <span className="text-[11px] font-black uppercase tracking-tighter text-muted">{t.players.addPlayer}</span>
+              <span className="text-[11px] font-black uppercase tracking-tighter text-muted whitespace-nowrap">{t.players.addPlayer}</span>
             </Link>
           </div>
         </div>
@@ -403,36 +404,41 @@ function HomeContent() {
                 <Link
                   key={tourn.id}
                   href={`/tournaments/${tourn.id}?from=home`}
-                  className="card p-4 bg-primary/5 border-primary/15 hover:border-primary/30 transition-all active:scale-[0.98] flex items-center gap-4"
+                  className="card p-3 px-4 bg-primary/5 border-primary/15 hover:border-primary/30 transition-all active:scale-[0.98] flex items-center gap-3"
                 >
+                  {/* Date */}
+                  <div className="flex flex-col shrink-0 w-10">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-muted">
+                      {formatDate(tourn.created_at)}
+                    </span>
+                  </div>
+
                   {/* Stacked avatars */}
-                  <div className="flex -space-x-2 shrink-0">
-                    {parts.slice(0, 4).map((p: any, idx: number) => (
-                      <div
-                        key={p.id}
-                        className="w-10 h-10 rounded-full border-2 border-background bg-white/5 overflow-hidden flex items-center justify-center text-[11px] font-black"
-                        style={{ zIndex: parts.length - idx }}
-                      >
-                        {p.avatar_url ? (
-                          <img src={p.avatar_url} alt={p.nickname} className="w-full h-full object-cover" />
-                        ) : (
-                          (p.nickname || "?")[0].toUpperCase()
-                        )}
-                      </div>
-                    ))}
-                    {parts.length > 4 && (
-                      <div className="w-10 h-10 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[11px] font-black text-primary">
-                        +{parts.length - 4}
-                      </div>
-                    )}
+                  <div className="flex-1 flex justify-center">
+                    <div className="flex -space-x-2">
+                      {parts.slice(0, 6).map((p: any, idx: number) => (
+                        <div
+                          key={p.id}
+                          className="w-9 h-9 rounded-full border-2 border-background bg-white/5 overflow-hidden flex items-center justify-center text-[10px] font-black"
+                          style={{ zIndex: parts.length - idx }}
+                        >
+                          {p.avatar_url ? (
+                            <img src={p.avatar_url} alt={p.nickname} className="w-full h-full object-cover" />
+                          ) : (
+                            (p.nickname || "?")[0].toUpperCase()
+                          )}
+                        </div>
+                      ))}
+                      {parts.length > 6 && (
+                        <div className="w-9 h-9 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">
+                          +{parts.length - 6}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black uppercase tracking-tight text-sm text-primary truncate">{tourn.name}</p>
-                    <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-0.5">
-                      {t.tournament.participants.replace('{count}', parts.length.toString())}
-                    </p>
-                  </div>
-                  <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shrink-0 transition-all group-hover:bg-primary/20">
+
+                  {/* Trophy */}
+                  <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shrink-0">
                     <Trophy className="w-5 h-5 drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />
                   </div>
                 </Link>

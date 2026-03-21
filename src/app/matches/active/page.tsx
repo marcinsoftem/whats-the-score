@@ -155,7 +155,7 @@ function MatchPageContent() {
             if (isTournamentMatch) {
               setMatchTournamentId(matchToEdit.tournament_id);
               const { data: tourn } = await supabase.from('tournaments')
-                .select('created_by, status, name')
+                .select('created_by, status, created_at')
                 .eq('id', matchToEdit.tournament_id)
                 .single();
               
@@ -164,7 +164,8 @@ function MatchPageContent() {
                 const isFinished = tourn.status === "finished";
                 setIsTournamentOrganizer(isOrganizer);
                 setIsTournamentFinished(isFinished);
-                setTournamentName(tourn.name);
+                const dateStr = new Date(tourn.created_at).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' });
+                setTournamentName('Turniej ' + dateStr);
                 
                 // Locked if tournament finished OR not organizer OR games exist
                 setIsCompleted((isOrganizer && !isFinished) ? hasGames : true);

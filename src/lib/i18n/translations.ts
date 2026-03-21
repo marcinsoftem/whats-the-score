@@ -59,6 +59,11 @@ export const translations = {
       waitingForUserData: "Czekam na dane użytkownika...",
       supabaseConfigError: "Błąd: Supabase nie jest skonfigurowany. Sprawdź zmienne środowiskowe.",
       saveError: "Błąd zapisu gracza. Upewnij się, że schemat bazy jest poprawny.",
+      filters: {
+        all: "Wszystkie",
+        favorites: "Ulubieni",
+        virtual: "Wirtualni"
+      }
     },
     matches: {
       title: "Historia meczów",
@@ -219,6 +224,11 @@ export const translations = {
       waitingForUserData: "Waiting for user data...",
       supabaseConfigError: "Error: Supabase is not configured. Check environment variables.",
       saveError: "Error saving player. Ensure the database schema is correct.",
+      filters: {
+        all: "All",
+        favorites: "Favorites",
+        virtual: "Virtual"
+      }
     },
     matches: {
       title: "Match history",

@@ -349,15 +349,25 @@ function TournamentContent() {
       <header className="flex items-center gap-4">
         <button
           onClick={() => router.push(from === 'matches' ? '/matches?tab=tournaments' : '/')}
-          className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
+          className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground shrink-0"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-black tracking-tight uppercase italic text-primary truncate">
-            {tournament?.name || t.tournament.title}
+
+        <div className="flex-1 flex flex-col items-center min-w-0">
+          <h1 className="text-xl font-black tracking-tight uppercase italic text-primary">
+            {t.tournament.badge}
           </h1>
+          {tournament?.created_at && (
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Trophy className="w-3 h-3 text-muted" />
+              <span className="text-[11px] uppercase font-black tracking-widest text-muted">
+                {formatDate(tournament.created_at)}
+              </span>
+            </div>
+          )}
         </div>
+
         <div className="flex-none flex items-center gap-2">
           {isOrganizer && !isFinished && (
             <button

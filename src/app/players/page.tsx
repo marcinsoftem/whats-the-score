@@ -26,6 +26,8 @@ function PlayersPageContent() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showOnlyFavs, setShowOnlyFavs] = useState(false);
+  const [showOnlyVirtual, setShowOnlyVirtual] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [hasHistory, setHasHistory] = useState(false);
@@ -158,9 +160,12 @@ function PlayersPageContent() {
     }
   };
 
-  const filteredPlayers = players.filter(p => 
-    p.nickname.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPlayers = players.filter(p => {
+    const matchesSearch = p.nickname.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFav = showOnlyFavs ? favIds.includes(p.id) : true;
+    const matchesVirtual = showOnlyVirtual ? p.type === 'virtual' : true;
+    return matchesSearch && matchesFav && matchesVirtual;
+  });
 
   if (!isLoaded) return <Preloader />;
 
@@ -179,15 +184,40 @@ function PlayersPageContent() {
           </h1>
         </div>
 
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary transition-colors" />
-          <input 
-            type="text" 
-            placeholder={t.players.searchPlaceholder}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none focus:border-primary/50 transition-all"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex flex-col gap-4">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary transition-colors" />
+            <input 
+              type="text" 
+              placeholder={t.players.searchPlaceholder}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none focus:border-primary/50 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl">
+            <button
+              onClick={() => setShowOnlyFavs(!showOnlyFavs)}
+              className={`flex-1 py-2.5 text-[12px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                showOnlyFavs 
+                  ? "bg-primary text-background shadow-[0_0_20px_rgba(198,255,0,0.4)] scale-[1.02]" 
+                  : "text-muted hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              {t.players.filters.favorites}
+            </button>
+            <button
+              onClick={() => setShowOnlyVirtual(!showOnlyVirtual)}
+              className={`flex-1 py-2.5 text-[12px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                showOnlyVirtual 
+                  ? "bg-primary text-background shadow-[0_0_20px_rgba(198,255,0,0.4)] scale-[1.02]" 
+                  : "text-muted hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              {t.players.filters.virtual}
+            </button>
+          </div>
         </div>
       </header>
 

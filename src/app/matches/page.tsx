@@ -306,38 +306,42 @@ function MatchesListContent() {
                     >
                       <Link
                         href={`/tournaments/${tourn.id}?from=matches`}
-                        className={`card p-4 flex items-center gap-4 transition-all active:scale-[0.98] ${isFinished ? 'bg-white/3 border-white/5 opacity-70' : 'bg-primary/5 border-primary/15 hover:border-primary/30'}`}
+                        className={`card p-3 px-4 flex items-center gap-3 transition-all active:scale-[0.98] ${isFinished ? 'bg-white/3 border-white/5 opacity-70' : 'bg-primary/5 border-primary/15 hover:border-primary/30'}`}
                       >
+                        {/* Date */}
+                        <div className="flex flex-col shrink-0 w-10">
+                          <span className="text-[11px] font-black uppercase tracking-widest text-muted">
+                            {formatDate(tourn.created_at)}
+                          </span>
+                        </div>
+
                         {/* Stacked avatars */}
-                        <div className="flex -space-x-2 shrink-0">
-                          {parts.slice(0, 4).map((p: any, i: number) => (
-                            <div
-                              key={p.id}
-                              className="w-11 h-11 rounded-full border-2 border-background bg-white/5 overflow-hidden flex items-center justify-center text-[11px] font-black"
-                              style={{ zIndex: parts.length - i }}
-                            >
-                              {p.avatar_url ? (
-                                <img src={p.avatar_url} alt={p.nickname} className="w-full h-full object-cover" />
-                              ) : (
-                                (p.nickname || '?')[0].toUpperCase()
-                              )}
-                            </div>
-                          ))}
-                          {parts.length > 4 && (
-                            <div className="w-11 h-11 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[11px] font-black text-primary">
-                              +{parts.length - 4}
-                            </div>
-                          )}
+                        <div className="flex-1 flex justify-center">
+                          <div className="flex -space-x-2">
+                            {parts.slice(0, 6).map((p: any, i: number) => (
+                              <div
+                                key={p.id}
+                                className="w-9 h-9 rounded-full border-2 border-background bg-white/5 overflow-hidden flex items-center justify-center text-[10px] font-black"
+                                style={{ zIndex: parts.length - i }}
+                              >
+                                {p.avatar_url ? (
+                                  <img src={p.avatar_url} alt={p.nickname} className="w-full h-full object-cover" />
+                                ) : (
+                                  (p.nickname || '?')[0].toUpperCase()
+                                )}
+                              </div>
+                            ))}
+                            {parts.length > 6 && (
+                              <div className="w-9 h-9 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">
+                                +{parts.length - 6}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-black uppercase tracking-tight text-sm truncate ${isFinished ? 'text-muted' : 'text-primary'}`}>{tourn.name}</p>
-                          <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-0.5">
-                            {t.tournament.participants.replace('{count}', parts.length.toString())}
-                          </p>
-                        </div>
-
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${isFinished
+                        {/* Status icon */}
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${
+                          isFinished
                             ? 'text-muted border-white/10 bg-white/5'
                             : 'text-primary border-primary/30 bg-primary/10'
                           }`}>
