@@ -10,6 +10,7 @@ import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2, Lock, LockOpen, C
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Preloader } from "@/components/ui/Preloader";
 
 // Mock data removed
 
@@ -55,11 +56,14 @@ function MatchPageContent() {
   const [matchDate, setMatchDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [matchTournamentId, setMatchTournamentId] = useState<string | null>(null);
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [tournamentName, setTournamentName] = useState<string | null>(null);
+  const [isTournamentFinished, setIsTournamentFinished] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isDeletingRef = useRef(false);
   const saveInProgressRef = useRef(false);
   const [isPersisted, setIsPersisted] = useState(false);
+  const [isTournamentOrganizer, setIsTournamentOrganizer] = useState(false);
 
   const supabase = createClient();
 
@@ -147,9 +151,30 @@ function MatchPageContent() {
             // For tournament matches: open if empty, locked if not. Regular matches lock when editing.
             const isTournamentMatch = !!matchToEdit.tournament_id;
             const hasGames = formattedGames.length > 0;
-            setIsCompleted(isTournamentMatch ? hasGames : true);
+            
+            if (isTournamentMatch) {
+              setMatchTournamentId(matchToEdit.tournament_id);
+              const { data: tourn } = await supabase.from('tournaments')
+                .select('created_by, status, name')
+                .eq('id', matchToEdit.tournament_id)
+                .single();
+              
+              if (tourn) {
+                const isOrganizer = tourn.created_by === standardizedUser.id;
+                const isFinished = tourn.status === "finished";
+                setIsTournamentOrganizer(isOrganizer);
+                setIsTournamentFinished(isFinished);
+                setTournamentName(tourn.name);
+                
+                // Locked if tournament finished OR not organizer OR games exist
+                setIsCompleted((isOrganizer && !isFinished) ? hasGames : true);
+              } else {
+                setIsCompleted(true);
+              }
+            } else {
+              setIsCompleted(true); // Regular matches are always locked when editing
+            }
             setIsPersisted(true);
-            setMatchTournamentId(matchToEdit.tournament_id || null);
           }
         } else {
           const savedMatch = localStorage.getItem('wts_active_match');
@@ -337,12 +362,6 @@ function MatchPageContent() {
   const handleDeleteMatchCurrent = async () => {
     if (!matchId) return;
 
-    if (!isConfirmingDelete) {
-      setIsConfirmingDelete(true);
-      setTimeout(() => setIsConfirmingDelete(false), 3000);
-      return;
-    }
-
     try {
       isDeletingRef.current = true;
       setIsDeleting(true);
@@ -367,20 +386,43 @@ function MatchPageContent() {
         throw new Error(`Nie znaleziono meczu w bazie danych (MatchID: ${matchId.substring(0,8)})`);
       }
 
-      // Step 2: Delete Games
-      const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
-      if (gError) throw gError;
-      console.log('Games deleted successfully');
+      // Step 2: Clear Results or Delete Record
+      if (matchTournamentId) {
+        // Tournament match: reset to pending
+        console.log('Match Detail: Resetting tournament match to pending...');
+        
+        // Delete Games
+        const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
+        if (gError) throw gError;
 
-      // Step 3: Delete Match
-      const { error: mError } = await supabase.from('matches').delete().eq('id', matchId);
-      if (mError) throw mError;
-      console.log('Match record deleted successfully');
+        // Reset scores in match record
+        const { error: mUpdateError } = await supabase
+          .from('matches')
+          .update({ score1: 0, score2: 0 })
+          .eq('id', matchId);
+        if (mUpdateError) throw mUpdateError;
+
+        console.log('Tournament match reset successfully');
+      } else {
+        // Regular match: full delete
+        console.log('Match Detail: Explicitly deleting regular match record...');
+        
+        // Step 2: Delete Games
+        const { error: gError } = await supabase.from('match_games').delete().eq('match_id', matchId);
+        if (gError) throw gError;
+        console.log('Games deleted successfully');
+
+        // Step 3: Delete Match
+        const { error: mError } = await supabase.from('matches').delete().eq('id', matchId);
+        if (mError) throw mError;
+        console.log('Match record deleted successfully');
+      }
       
       localStorage.removeItem('wts_active_match');
       
-      // Small delay before redirecting to ensure DB finished
-      setTimeout(() => router.push('/'), 300);
+      // Redirect immediately to prevent jitter
+      handleGoBack();
+      return; // Stop here to prevent 'finally' from closing modal if successful
     } catch (err: any) {
       console.error('Full delete error:', err);
       alert(`BŁĄD USUWANIA: ${err.message || 'Błąd serwera'}\nID: ${matchId}\nKod: ${err.code || '?'}`);
@@ -388,11 +430,11 @@ function MatchPageContent() {
       isDeletingRef.current = false;
       setIsSaving(false);
     } finally {
-      setIsConfirmingDelete(false);
+      setShowDeleteModal(false);
     }
   };
 
-  if (!isLoaded) return null;
+  if (!isLoaded || isDeleting) return <Preloader />;
 
   return (
     <div className="flex flex-col gap-8 pb-32">
@@ -404,25 +446,43 @@ function MatchPageContent() {
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center italic text-primary">
-            {matchTournamentId ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="text-[11px] border border-primary/40 bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black tracking-widest">TURNIEJ</span>
-                {editId ? t.matches.active.editTitle : t.matches.active.matchInProgress}
-              </span>
-            ) : (
-              editId ? t.matches.active.editTitle : t.matches.active.matchInProgress
+          <div className="flex-1 flex flex-col items-center">
+            <h1 className="text-xl font-black tracking-tight uppercase italic text-primary">
+              MECZ
+            </h1>
+            {tournamentName && (
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted italic -mt-1">
+                {tournamentName}
+              </p>
             )}
-          </h1>
-          <button
-            onClick={() => {
-              setIsCompleted(!isCompleted);
-              setHasInteracted(true);
-            }}
-            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
-          >
-            {isCompleted ? <Lock className="w-5 h-5 text-secondary" /> : <LockOpen className="w-5 h-5 text-primary" />}
-          </button>
+          </div>
+          <div className="flex items-center gap-2">
+            {isPersisted && !isCompleted && !isTournamentFinished && (!matchTournamentId || isTournamentOrganizer) && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                disabled={isDeleting}
+                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-red-500 hover:bg-red-500/10 hover:border-red-500/30 shrink-0"
+                title={matchTournamentId ? "Zresetuj mecz" : "Usuń mecz"}
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+            {matchTournamentId && !isTournamentOrganizer ? (
+              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center opacity-40 shrink-0 cursor-default">
+                {isCompleted ? <Lock className="w-5 h-5" /> : <LockOpen className="w-5 h-5" />}
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsCompleted(!isCompleted);
+                  setHasInteracted(true);
+                }}
+                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
+              >
+                {isCompleted ? <Lock className="w-5 h-5 text-secondary" /> : <LockOpen className="w-5 h-5 text-primary" />}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 group">
@@ -586,23 +646,6 @@ function MatchPageContent() {
           >
             {editingIndex !== null ? t.matches.active.updateGame : t.matches.active.saveGame}
           </button>
-
-          {isPersisted && (
-            <button
-              onClick={handleDeleteMatchCurrent}
-              className={`w-[72px] border rounded-[20px] flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(239,68,68,0.1)] active:scale-95 ${
-                isConfirmingDelete 
-                  ? 'bg-red-500 text-white border-red-500' 
-                  : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20'
-              }`}
-            >
-              {isConfirmingDelete ? (
-                <span className="text-[10px] px-1 text-center font-black uppercase leading-tight">Na pewno?</span>
-              ) : (
-                <Trash2 className="w-6 h-6" />
-              )}
-            </button>
-          )}
         </div>
       )}
 
@@ -633,6 +676,49 @@ function MatchPageContent() {
                 <Trash2 className="w-5 h-5" />
                 {t.matches.active.deleteGame}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Overlay */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isDeleting && setShowDeleteModal(false)} />
+          <div className="relative w-full max-w-sm bg-background border border-white/10 rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-8 duration-500 overflow-hidden">
+            <div className="flex flex-col items-center text-center gap-6">
+              <div className="w-20 h-20 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center">
+                <Trash2 className="w-10 h-10" />
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                  {matchTournamentId ? "Zresetuj mecz" : "Usuń mecz"}
+                </h3>
+                <p className="text-muted text-sm font-medium leading-relaxed">
+                  {matchTournamentId 
+                    ? "Czy na pewno chcesz usunąć wyniki tego meczu turniejowego? Mecz powróci do puli gier do rozegrania."
+                    : "Czy na pewno chcesz całkowicie usunąć ten mecz? Ta operacja jest nieodwracalna."}
+                </p>
+              </div>
+
+              <div className="w-full flex flex-col gap-3">
+                <button
+                  onClick={handleDeleteMatchCurrent}
+                  disabled={isDeleting}
+                  className="w-full py-4 rounded-2xl bg-red-500 text-white font-black uppercase tracking-widest text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    matchTournamentId ? "TAK, ZRESETUJ WYNIK" : "TAK, USUŃ MECZ"
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all active:scale-95"
+                >
+                  {t.common.cancel}
+                </button>
+              </div>
             </div>
           </div>
         </div>

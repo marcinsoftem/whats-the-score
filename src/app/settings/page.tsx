@@ -175,7 +175,6 @@ function SettingsContent() {
                 >
                   <div className="w-24 h-24 rounded-full bg-accent/20 border-2 border-white/5 flex items-center justify-center relative overflow-hidden ring-4 ring-primary/10 transition-all duration-300 group-hover:ring-primary/30 group-active:scale-95">
                     <img 
-                      key={avatarSeed}
                       src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed || 'Ty'}&clothing=graphicShirt&accessoriesProbability=0`} 
                       alt="Avatar" 
                       className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" 
@@ -324,7 +323,7 @@ function SettingsContent() {
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-3 p-5 rounded-2xl bg-secondary/10 border border-secondary/20 text-secondary font-black uppercase tracking-widest text-sm hover:bg-secondary/20 transition-all active:scale-[0.98] group"
             >
-              <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+              <LogOut className="w-5 h-5" />
               {t.settings.logout}
             </button>
           </section>

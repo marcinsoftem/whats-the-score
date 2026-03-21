@@ -47,8 +47,8 @@ function MatchesListContent() {
           .from('matches')
           .select('*, player1:player1_id(*), player2:player2_id(*), match_games(*)')
           .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
-          .order('timestamp', { ascending: false })
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .order('timestamp', { ascending: false });
 
         if (error) throw error;
 
@@ -263,10 +263,10 @@ function MatchesListContent() {
 
                         {/* Result icons: Trophy if tournament, Thumb if win */}
                         <div className="flex items-center gap-1.5 shrink-0 self-center">
+                          <div className="w-5" />
                           {match.tournament_id && (
                             <Trophy className="w-4 h-4 text-primary opacity-60" />
                           )}
-                          <div className="w-5" />
                         </div>
                       </Link>
                     </motion.div>
@@ -310,7 +310,7 @@ function MatchesListContent() {
                       >
                         {/* Stacked avatars */}
                         <div className="flex -space-x-2 shrink-0">
-                          {parts.slice(0, 5).map((p: any, i: number) => (
+                          {parts.slice(0, 4).map((p: any, i: number) => (
                             <div
                               key={p.id}
                               className="w-11 h-11 rounded-full border-2 border-background bg-white/5 overflow-hidden flex items-center justify-center text-[11px] font-black"
@@ -323,9 +323,9 @@ function MatchesListContent() {
                               )}
                             </div>
                           ))}
-                          {parts.length > 5 && (
+                          {parts.length > 4 && (
                             <div className="w-11 h-11 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[11px] font-black text-primary">
-                              +{parts.length - 5}
+                              +{parts.length - 4}
                             </div>
                           )}
                         </div>
@@ -337,12 +337,16 @@ function MatchesListContent() {
                           </p>
                         </div>
 
-                        <span className={`flex items-center justify-center p-1.5 rounded-full shrink-0 border ${isFinished
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${isFinished
                             ? 'text-muted border-white/10 bg-white/5'
-                            : 'text-primary border-primary/30 bg-primary/10 px-2 py-1'
+                            : 'text-primary border-primary/30 bg-primary/10'
                           }`}>
-                          {isFinished ? <Lock className="w-3.5 h-3.5" /> : <span className="text-[11px] font-black uppercase">{t.tournament.active}</span>}
-                        </span>
+                          {isFinished ? (
+                            <Lock className="w-4 h-4" />
+                          ) : (
+                            <Trophy className="w-4 h-4 drop-shadow-[0_0_8px_rgba(198,255,0,0.5)]" />
+                          )}
+                        </div>
                       </Link>
                     </motion.div>
                   );

@@ -31,7 +31,10 @@ export function ScoreCounter({ label, value, onChange, color = 'primary' }: Coun
 
         <button 
           onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-12 h-10 sm:w-16 sm:h-12 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 text-muted hover:text-secondary active:scale-95 transition-all"
+          disabled={value === 0}
+          className={`w-12 h-10 sm:w-16 sm:h-12 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 text-muted transition-all ${
+            value === 0 ? 'opacity-20 cursor-not-allowed' : 'hover:text-secondary active:scale-95'
+          }`}
         >
           <ChevronDown className="w-5 h-5 sm:w-6 h-6" />
         </button>

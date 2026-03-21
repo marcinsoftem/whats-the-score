@@ -84,3 +84,13 @@ h1, h2, h3, h4, h5, h6 {
 .nav-item:hover, .nav-item.active {
   color: var(--primary);
 }
+
+@keyframes loading-bar {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+  50% { transform: scaleY(1.5); opacity: 1; }
+}
+
+.loading-bar {
+  animation: loading-bar 1s ease-in-out infinite;
+  transform-origin: center;
+}

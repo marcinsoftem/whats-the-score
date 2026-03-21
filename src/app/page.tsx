@@ -67,8 +67,8 @@ function HomeContent() {
           .from('matches')
           .select('*, player1:player1_id(*), player2:player2_id(*), match_games(*)')
           .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
-          .order('timestamp', { ascending: false })
           .order('created_at', { ascending: false })
+          .order('timestamp', { ascending: false })
           .limit(5);
 
         if (pError) throw pError;
@@ -507,10 +507,10 @@ function HomeContent() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0 self-center">
+                      <div className="w-6 shrink-0" />
                       {match.tournament_id && (
                         <Trophy className="w-4 h-4 text-primary opacity-60" />
                       )}
-                      <div className="w-6 shrink-0" />
                     </div>
                   </Link>
                 </motion.div>

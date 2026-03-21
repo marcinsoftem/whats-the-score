@@ -12,7 +12,7 @@ import { Preloader } from "@/components/ui/Preloader";
 function AddPlayerContent() {
   const { t } = useLanguage();
   const [nickname, setNickname] = useState("");
-  const [avatarSeed, setAvatarSeed] = useState(() => crypto.randomUUID());
+  const [avatarSeed, setAvatarSeed] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -38,7 +38,11 @@ function AddPlayerContent() {
     }
     getUser();
     setMounted(true);
-  }, []);
+    // If not editing, generate a random seed immediately
+    if (!editId) {
+      setAvatarSeed(crypto.randomUUID());
+    }
+  }, [editId]);
 
   useEffect(() => {
     if (!mounted || !currentUser) return;
@@ -220,12 +224,15 @@ function AddPlayerContent() {
             className="group relative"
           >
             <div className="w-28 h-28 rounded-full bg-accent/20 border-2 border-white/5 mx-auto flex items-center justify-center relative overflow-hidden ring-4 ring-primary/10 transition-all duration-300 group-hover:ring-primary/30 group-active:scale-95">
-              <img 
-                key={avatarSeed}
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`} 
-                alt="Avatar preview" 
-                className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" 
-              />
+              {avatarSeed ? (
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`} 
+                  alt="Avatar preview" 
+                  className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" 
+                />
+              ) : (
+                <div className="w-full h-full bg-white/5 animate-pulse" />
+              )}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <RefreshCcw className="w-8 h-8 text-white animate-spin" />
               </div>

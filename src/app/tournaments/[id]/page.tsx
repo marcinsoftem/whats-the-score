@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, Trophy, Loader2, CheckCircle2, Crown, Lock, LockOpen, Shield, Play, Glasses } from "lucide-react";
+import { ChevronLeft, Trophy, Loader2, CheckCircle2, Crown, Lock, LockOpen, Shield, Play, Glasses, Star, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -37,6 +37,9 @@ function TournamentContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isConfirmingEnd, setIsConfirmingEnd] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
 
   const supabase = createClient();
 
@@ -142,9 +145,6 @@ function TournamentContent() {
 
     const matchEl = (
       <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: idx * 0.03 }}
         className={`card p-3 px-4 bg-accent/20 flex items-center justify-between gap-3 transition-all ${
           canEdit ? "border-primary/20 hover:border-primary/40" : "border-white/5"
         }`}
@@ -224,6 +224,50 @@ function TournamentContent() {
     return matchEl;
   };
 
+  const handleDeleteTournament = async () => {
+    if (!tournamentId || !isOrganizer) return;
+    setIsDeleting(true);
+
+    try {
+      // 1. Get all match IDs for this tournament
+      const matchIds = matches.map(m => m.id);
+
+      // 2. Delete games for all those matches first
+      if (matchIds.length > 0) {
+        await supabase
+          .from('match_games')
+          .delete()
+          .in('match_id', matchIds);
+        
+        // 3. Delete the matches
+        await supabase
+          .from('matches')
+          .delete()
+          .eq('tournament_id', tournamentId);
+      }
+
+      // 4. Delete participants
+      await supabase
+        .from('tournament_participants')
+        .delete()
+        .eq('tournament_id', tournamentId);
+
+      // 5. Delete the tournament itself
+      const { error: tError } = await supabase
+        .from('tournaments')
+        .delete()
+        .eq('id', tournamentId);
+
+      if (tError) throw tError;
+
+      router.push('/');
+    } catch (err: any) {
+      console.error('Error deleting tournament:', err);
+      // alert('Błąd usuwania turnieju: ' + err.message);
+      setIsDeleting(false);
+    }
+  };
+
   const handleEndTournament = async () => {
     if (!isConfirmingEnd) {
       setIsConfirmingEnd(true);
@@ -286,15 +330,16 @@ function TournamentContent() {
     return date.toLocaleDateString("pl-PL", { day: "2-digit", month: "short" });
   };
 
-  const isOrganizer = tournament && currentUser && tournament.created_by === currentUser.id;
-  const isFinished = tournament?.status === "finished";
-  const leaderboard = computeLeaderboard();
-
   const medalColor = (idx: number) => {
     if (idx === 0) return "text-yellow-400 border-yellow-400/30 bg-yellow-400/10";
     if (idx === 1) return "text-zinc-300 border-zinc-300/30 bg-zinc-300/10";
     return "text-orange-400 border-orange-400/30 bg-orange-400/10";
   };
+
+  const isOrganizer = tournament && currentUser && tournament.created_by === currentUser.id;
+  const isFinished = tournament?.status === "finished";
+  const leaderboard = computeLeaderboard();
+  const allMatchesPlayed = matches.length > 0 && matches.every(m => m.match_games && m.match_games.length > 0);
 
   if (!isLoaded) return <Preloader />;
 
@@ -313,23 +358,42 @@ function TournamentContent() {
             {tournament?.name || t.tournament.title}
           </h1>
         </div>
-        {isOrganizer ? (
-          <button
-            onClick={handleToggleLock}
-            disabled={isEnding}
-            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground shrink-0"
-          >
-            {isEnding ? (
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            ) : isFinished ? (
-              <Lock className="w-5 h-5 text-secondary" />
-            ) : (
-              <LockOpen className="w-5 h-5 text-primary" />
-            )}
-          </button>
-        ) : (
-          <Trophy className={`w-6 h-6 shrink-0 ${isFinished ? "text-muted" : "text-primary"}`} />
-        )}
+        <div className="flex-none flex items-center gap-2">
+          {isOrganizer && !isFinished && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isEnding || isDeleting}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-transform text-red-500 hover:bg-red-500/10 hover:border-red-500/30 shrink-0"
+              title="Usuń turniej"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+          {isOrganizer ? (
+            <button
+              onClick={handleToggleLock}
+              disabled={isEnding || isDeleting}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-transform text-foreground shrink-0"
+              title={isFinished ? "Odblokuj turniej" : "Zablokuj turniej"}
+            >
+              {isEnding ? (
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              ) : isFinished ? (
+                <Lock className="w-5 h-5 text-secondary" />
+              ) : (
+                <LockOpen className="w-5 h-5 text-primary" />
+              )}
+            </button>
+          ) : (
+            <div className={`w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center opacity-40 shrink-0`}>
+              {isFinished ? (
+                <Lock className="w-5 h-5" />
+              ) : (
+                <LockOpen className="w-5 h-5" />
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Participants avatars */}
@@ -347,9 +411,9 @@ function TournamentContent() {
                 )}
               </div>
               {tournament?.created_by === p.id && (
-                <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 z-10">
-                  <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-[0_0_12px_rgba(198,255,0,0.6)] border border-background">
-                    <Glasses className="w-3.5 h-3.5 text-background fill-background" />
+                <div className="absolute -top-1 -right-1 bg-background rounded-full p-0.5 z-10 scale-110">
+                  <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-[0_0_12px_rgba(250,204,21,0.6)] border border-background">
+                    <Star className="w-3.5 h-3.5 text-black fill-black" />
                   </div>
                 </div>
               )}
@@ -371,9 +435,6 @@ function TournamentContent() {
           {leaderboard.map((entry, idx) => (
             <motion.div
               key={entry.profile.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
               className={`flex items-center gap-3 p-3 rounded-2xl border ${isFinished && idx < 3 ? medalColor(idx) : "border-white/5 bg-white/5"}`}
             >
               <span className="text-lg w-7 text-center font-black">
@@ -454,11 +515,13 @@ function TournamentContent() {
       {isOrganizer && !isFinished && (
         <div className="flex flex-col gap-3">
           <button
-            onClick={handleEndTournament}
-            disabled={isEnding}
+            onClick={allMatchesPlayed ? handleEndTournament : undefined}
+            disabled={isEnding || !allMatchesPlayed}
             className={`w-full py-5 rounded-[20px] font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${
               isConfirmingEnd
                 ? "bg-secondary text-white border-secondary shadow-[0_0_20px_rgba(255,87,34,0.3)]"
+                : !allMatchesPlayed
+                ? "bg-white/5 border border-white/10 text-muted/40 cursor-not-allowed"
                 : "bg-white/5 border border-white/10 text-muted hover:text-foreground hover:bg-white/10"
             }`}
           >
@@ -468,6 +531,11 @@ function TournamentContent() {
               <>
                 <CheckCircle2 className="w-5 h-5" />
                 Na pewno zakończ
+              </>
+            ) : !allMatchesPlayed ? (
+              <>
+                <Trophy className="w-5 h-5 opacity-40" />
+                {t.tournament.endTournament}
               </>
             ) : (
               <>
@@ -481,6 +549,11 @@ function TournamentContent() {
               Kliknij ponownie, aby potwierdzić
             </p>
           )}
+          {!isConfirmingEnd && !allMatchesPlayed && (
+            <p className="text-center text-[10px] text-muted/50 font-black uppercase tracking-[0.2em] italic">
+              Rozegraj wszystkie mecze, aby móc zakończyć turniej
+            </p>
+          )}
         </div>
       )}
 
@@ -489,6 +562,45 @@ function TournamentContent() {
         <div className="flex items-center justify-center gap-2 py-4 text-muted">
           <Lock className="w-4 h-4" />
           <span className="text-[11px] font-black uppercase tracking-widest">{t.tournament.finished}</span>
+        </div>
+      )}
+      {/* Delete Confirmation Overlay */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isDeleting && setShowDeleteConfirm(false)} />
+          <div className="relative w-full max-w-sm bg-background border border-white/10 rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-8 duration-500 overflow-hidden">
+            <div className="flex flex-col items-center text-center gap-6">
+              <div className="w-20 h-20 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center">
+                <Trash2 className="w-10 h-10" />
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                  Usuń turniej
+                </h3>
+                <p className="text-muted text-sm font-medium leading-relaxed">
+                  Czy na pewno chcesz całkowicie usunąć ten turniej? Spowoduje to nieodwracalne usunięcie wszystkich powiązanych meczów i wyników z historii.
+                </p>
+              </div>
+
+              <div className="w-full flex flex-col gap-3">
+                <button
+                  onClick={handleDeleteTournament}
+                  disabled={isDeleting}
+                  className="w-full py-4 rounded-2xl bg-red-500 text-white font-black uppercase tracking-widest text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : "TAK, USUŃ TURNIEJ"}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all active:scale-95"
+                >
+                  {t.common.cancel}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
