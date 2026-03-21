@@ -5,7 +5,8 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { ScoreCounter } from "@/components/match/ScoreCounter";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { Player } from "@/types";
-import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2, Lock, LockOpen } from "lucide-react";
+import { ChevronLeft, Save, Trash2, Pencil, Calendar, Loader2, Lock, LockOpen, Crown } from "lucide-react";
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -31,6 +32,8 @@ function MatchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
+  const fromTournament = searchParams.get('from') === 'tournament';
+  const tournamentId = searchParams.get('tournamentId');
 
   const [score1, setScore1] = useState(0);
   const [score2, setScore2] = useState(0);
@@ -51,6 +54,7 @@ function MatchPageContent() {
   const [matchId, setMatchId] = useState<string>("");
   const [matchDate, setMatchDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [matchTournamentId, setMatchTournamentId] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isDeletingRef = useRef(false);
@@ -140,8 +144,12 @@ function MatchPageContent() {
             setScore1(0);
             setScore2(0);
             setIsSetup(false);
-            setIsCompleted(true);
+            // For tournament matches: open if empty, locked if not. Regular matches lock when editing.
+            const isTournamentMatch = !!matchToEdit.tournament_id;
+            const hasGames = formattedGames.length > 0;
+            setIsCompleted(isTournamentMatch ? hasGames : true);
             setIsPersisted(true);
+            setMatchTournamentId(matchToEdit.tournament_id || null);
           }
         } else {
           const savedMatch = localStorage.getItem('wts_active_match');
@@ -184,7 +192,7 @@ function MatchPageContent() {
       const isSwapped = player1?.id !== currentUser?.id && player2?.id === currentUser?.id;
 
       // 1. Save main match record
-      const matchData = {
+      const matchData: any = {
         id: matchId,
         player1_id: isSwapped ? player2.id : player1.id,
         player2_id: isSwapped ? player1.id : player2.id,
@@ -193,6 +201,7 @@ function MatchPageContent() {
         timestamp: new Date(matchDate).toISOString(),
         created_by: currentUser?.id === 'anon' || !currentUser?.id ? null : currentUser?.id
       };
+      if (matchTournamentId) matchData.tournament_id = matchTournamentId;
 
       console.log('Saving match to Supabase:', matchData);
 
@@ -231,6 +240,9 @@ function MatchPageContent() {
       }
 
       setIsPersisted(true);
+      // Removed: Tournament matches no longer lock automatically after for first save 
+      // during the session, allowing user to continue entering scores.
+      // Next load will lock it because it won't be empty.
 
       // 3. Update local storage for temporary persistence
       const state = { score1, score2, games, matchId, matchDate, player1, player2, isCompleted, isPersisted: true };
@@ -314,7 +326,11 @@ function MatchPageContent() {
       localStorage.removeItem('wts_active_match');
     }
     const from = searchParams.get('from');
-    const backUrl = from === 'players' ? '/players' : '/';
+    if (from === 'tournament' && tournamentId) {
+      router.push(`/tournaments/${tournamentId}`);
+      return;
+    }
+    const backUrl = from === 'players' ? '/players' : (from === 'matches' ? '/matches' : '/');
     router.push(backUrl);
   };
 
@@ -389,7 +405,14 @@ function MatchPageContent() {
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center italic text-primary">
-            {editId ? t.matches.active.editTitle : t.matches.active.matchInProgress}
+            {matchTournamentId ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="text-[11px] border border-primary/40 bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black tracking-widest">TURNIEJ</span>
+                {editId ? t.matches.active.editTitle : t.matches.active.matchInProgress}
+              </span>
+            ) : (
+              editId ? t.matches.active.editTitle : t.matches.active.matchInProgress
+            )}
           </h1>
           <button
             onClick={() => {
@@ -407,7 +430,7 @@ function MatchPageContent() {
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-all group-hover:bg-primary/20">
               <Calendar className="w-4 h-4" />
             </div>
-            <span className="text-[10px] uppercase font-black tracking-widest text-muted group-hover:text-primary transition-colors">{t.matches.active.matchDate}</span>
+            <span className="text-[11px] uppercase font-black tracking-widest text-muted group-hover:text-primary transition-colors">{t.matches.active.matchDate}</span>
           </div>
           <input 
             type="date" 
@@ -424,13 +447,13 @@ function MatchPageContent() {
         <div className="h-1 text-center relative">
           {saveError && (
             <div className="absolute top-0 left-0 right-0 bg-secondary/10 border border-secondary/20 p-2 rounded-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 z-50">
-              <span className="text-[9px] font-black uppercase text-secondary italic">Sync Error: {saveError}</span>
+              <span className="text-[11px] font-black uppercase text-secondary italic">Sync Error: {saveError}</span>
             </div>
           )}
           {isSaving && !saveError && (
             <div className="absolute top-0 right-0 p-1 flex items-center gap-2 bg-primary/10 rounded-full border border-primary/20 pr-3 animate-in fade-in slide-in-from-top-1 duration-300">
               <Loader2 className="w-3 h-3 animate-spin text-primary" />
-              <span className="text-[8px] font-black uppercase text-primary italic tracking-tight">Sync</span>
+              <span className="text-[10px] font-black uppercase text-primary italic tracking-tight">Sync</span>
             </div>
           )}
         </div>
@@ -440,14 +463,14 @@ function MatchPageContent() {
       <div className="flex justify-between items-center bg-accent/30 p-4 rounded-3xl border border-white/5 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-primary">{p1Games}</span>
-          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">{t.matches.gamesLabel.replace(':', '')}</span>
+          <span className="text-[11px] uppercase font-black text-muted tracking-tighter">{t.matches.gamesLabel.replace(':', '')}</span>
         </div>
-        <div className="text-[10px] uppercase font-black text-primary tracking-[0.2em] px-5 py-2 bg-primary/10 rounded-full border border-primary/20">
+        <div className="text-[11px] uppercase font-black text-primary tracking-[0.2em] px-5 py-2 bg-primary/10 rounded-full border border-primary/20">
           {t.matches.active.matchResult}
         </div>
         <div className="flex flex-col items-center gap-1">
           <span className="text-5xl font-bold font-barlow-condensed leading-none text-secondary">{p2Games}</span>
-          <span className="text-[10px] uppercase font-black text-muted tracking-tighter">{t.matches.gamesLabel.replace(':', '')}</span>
+          <span className="text-[11px] uppercase font-black text-muted tracking-tighter">{t.matches.gamesLabel.replace(':', '')}</span>
         </div>
       </div>
 
@@ -515,13 +538,13 @@ function MatchPageContent() {
             {editingIndex !== null && (
               <button 
                 onClick={handleCancelEdit}
-                className="text-[10px] text-secondary font-bold hover:underline flex items-center gap-1 uppercase tracking-tighter"
+                className="text-[11px] text-secondary font-bold hover:underline flex items-center gap-1 uppercase tracking-tighter"
               >
                 {t.matches.active.cancelEdit} {editingIndex + 1}
               </button>
             )}
           </div>
-          <span className="text-[10px] text-primary font-bold">{games.length} {t.matches.active.saved}</span>
+          <span className="text-[11px] text-primary font-bold">{games.length} {t.matches.active.saved}</span>
         </div>
         
         <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
@@ -540,7 +563,7 @@ function MatchPageContent() {
                     : `bg-white/5 border-white/5 ${isCompleted ? 'opacity-80 cursor-default' : 'hover:border-primary/30 active:scale-95'}`
                 }`}
               >
-                <span className={`text-[9px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>
+                <span className={`text-[11px] uppercase font-black tracking-widest ${editingIndex === i ? "text-primary" : "text-muted"}`}>
                   Gem {i+1} {editingIndex === i && `(${t.common.edit.toUpperCase()})`}
                 </span>
                 <span className="text-2xl font-bold font-barlow-condensed tracking-wider text-foreground">
@@ -574,7 +597,7 @@ function MatchPageContent() {
               }`}
             >
               {isConfirmingDelete ? (
-                <span className="text-[9px] px-1 text-center font-black uppercase leading-tight">Na pewno?</span>
+                <span className="text-[10px] px-1 text-center font-black uppercase leading-tight">Na pewno?</span>
               ) : (
                 <Trash2 className="w-6 h-6" />
               )}

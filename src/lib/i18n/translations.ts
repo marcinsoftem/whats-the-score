@@ -3,7 +3,7 @@ export type Language = 'pl' | 'en';
 export const translations = {
   pl: {
     common: {
-      home: "Home",
+      home: "Start",
       matches: "Mecze",
       players: "Gracze",
       logout: "Wyloguj",
@@ -138,11 +138,32 @@ export const translations = {
       noData: "Brak danych do wyświetlenia. Rozegraj kilka meczów!",
       avgPoints: "Śr. punktów",
       recentTrend: "Ostatnie wyniki",
+      medals: "Medale",
+      noMedals: "Brak medali",
+    },
+    tournament: {
+      title: "Turniej",
+      startTournament: "Rozpocznij turniej",
+      activeTournaments: "Aktywne turnieje",
+      participants: "{count} graczy",
+      matches: "Mecze turniejowe",
+      endTournament: "Zakończ turniej",
+      confirmEnd: "Czy na pewno chcesz zakończyć turniej i ustalić ranking?",
+      leaderboard: "Ranking",
+      gold: "Złoto",
+      silver: "Srebro",
+      bronze: "Brąz",
+      badge: "TURNIEJ",
+      organizer: "ORGANIZATOR",
+      noTournaments: "Brak aktywnych turniejów",
+      finished: "Zakończony",
+      active: "Aktywny",
+      notOrganizer: "Tylko organizator może edytować wyniki",
     }
   },
   en: {
     common: {
-      home: "Home",
+      home: "Start",
       matches: "Matches",
       players: "Players",
       logout: "Logout",
@@ -277,6 +298,27 @@ export const translations = {
       noData: "No data to display. Play some matches!",
       avgPoints: "Avg points",
       recentTrend: "Recent results",
+      medals: "Medals",
+      noMedals: "No medals yet",
+    },
+    tournament: {
+      title: "Tournament",
+      startTournament: "Start tournament",
+      activeTournaments: "Active tournaments",
+      participants: "{count} players",
+      matches: "Tournament matches",
+      endTournament: "End tournament",
+      confirmEnd: "Are you sure you want to end the tournament and finalize the ranking?",
+      leaderboard: "Leaderboard",
+      gold: "Gold",
+      silver: "Silver",
+      bronze: "Bronze",
+      badge: "TOURNAMENT",
+      organizer: "ORGANIZER",
+      noTournaments: "No active tournaments",
+      finished: "Finished",
+      active: "Active",
+      notOrganizer: "Only the organizer can enter results",
     }
   }
 };

@@ -26,6 +26,7 @@ function StatsContent() {
   const [selectedOpponentId, setSelectedOpponentId] = useState<string>('all');
   const [opponents, setOpponents] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [medals, setMedals] = useState<{ gold: number; silver: number; bronze: number }>({ gold: 0, silver: 0, bronze: 0 });
   
   const supabase = createClient();
 
@@ -56,6 +57,19 @@ function StatsContent() {
             }
           });
           setOpponents(Array.from(oppsMap.values()));
+        }
+
+        // Load medals
+        const { data: medalsData } = await supabase
+          .from('tournament_medals')
+          .select('medal')
+          .eq('profile_id', user.id);
+        if (medalsData) {
+          const counts = medalsData.reduce((acc: any, m: any) => {
+            acc[m.medal] = (acc[m.medal] || 0) + 1;
+            return acc;
+          }, { gold: 0, silver: 0, bronze: 0 });
+          setMedals(counts);
         }
       } catch (err) {
         console.error('Error fetching stats:', err);
@@ -175,7 +189,7 @@ function StatsContent() {
             <button
               key={filter}
               onClick={() => setTimeFilter(filter)}
-              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all relative z-10 ${
+              className={`flex-1 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all relative z-10 ${
                 timeFilter === filter ? 'text-background' : 'text-muted hover:text-foreground'
               }`}
             >
@@ -193,7 +207,7 @@ function StatsContent() {
 
         {/* Player Filter */}
         <div className="flex flex-col gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted px-2">Przeciwnik</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-muted px-2">Przeciwnik</span>
           <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar px-1">
             <button
               onClick={() => setSelectedOpponentId('all')}
@@ -201,12 +215,12 @@ function StatsContent() {
                 selectedOpponentId === 'all' ? 'scale-110' : 'opacity-40 grayscale'
               }`}
             >
-              <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
+              <div className={`w-14 h-14 rounded-full border-2 flex items-center justify-center ${
                 selectedOpponentId === 'all' ? 'border-primary bg-primary/20' : 'border-white/10 bg-white/5'
               }`}>
                 <Activity className="w-5 h-5" />
               </div>
-              <span className="text-[8px] font-bold uppercase tracking-tighter">Wszyscy</span>
+              <span className="text-[10px] font-bold uppercase tracking-tighter">Wszyscy</span>
             </button>
             {opponents.map((opp) => (
               <button
@@ -216,7 +230,7 @@ function StatsContent() {
                   selectedOpponentId === opp.id ? 'scale-110' : 'opacity-40 grayscale'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-full border-2 overflow-hidden ${
+                <div className={`w-14 h-14 rounded-full border-2 overflow-hidden ${
                   selectedOpponentId === opp.id ? 'border-primary bg-primary/20' : 'border-white/10 bg-white/5'
                 }`}>
                   {opp.avatar_url ? (
@@ -225,35 +239,68 @@ function StatsContent() {
                     <div className="w-full h-full flex items-center justify-center font-black text-sm">{opp.nickname[0]}</div>
                   )}
                 </div>
-                <span className="text-[8px] font-bold uppercase tracking-tighter truncate w-full text-center">{opp.nickname}</span>
+                <span className="text-[10px] font-bold uppercase tracking-tighter truncate w-full text-center">{opp.nickname}</span>
               </button>
             ))}
           </div>
         </div>
       </header>
 
+      {/* Medals */}
+      {(medals.gold > 0 || medals.silver > 0 || medals.bronze > 0) && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 px-2">
+            <span className="text-lg">🏆</span>
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted">{t.stats.medals}</h2>
+          </div>
+          <div className="flex gap-3">
+            {medals.gold > 0 && (
+              <div className="flex-1 card p-4 bg-yellow-400/5 border-yellow-400/20 flex flex-col items-center gap-1">
+                <span className="text-2xl">🥇</span>
+                <span className="text-xl font-black text-yellow-400">{medals.gold}</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-yellow-400/60">{t.tournament.gold}</span>
+              </div>
+            )}
+            {medals.silver > 0 && (
+              <div className="flex-1 card p-4 bg-zinc-400/5 border-zinc-400/20 flex flex-col items-center gap-1">
+                <span className="text-2xl">🥈</span>
+                <span className="text-xl font-black text-zinc-300">{medals.silver}</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400/60">{t.tournament.silver}</span>
+              </div>
+            )}
+            {medals.bronze > 0 && (
+              <div className="flex-1 card p-4 bg-orange-400/5 border-orange-400/20 flex flex-col items-center gap-1">
+                <span className="text-2xl">🥉</span>
+                <span className="text-xl font-black text-orange-400">{medals.bronze}</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-orange-400/60">{t.tournament.bronze}</span>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div className="card p-5 bg-primary/5 border-primary/10 flex flex-col gap-1">
-          <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{t.stats.totalMatches}</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-primary/60">{t.stats.totalMatches}</span>
           <span className="text-4xl font-black italic tracking-tighter text-primary font-barlow-condensed leading-none">{stats.total}</span>
         </div>
         <div className="card p-5 bg-secondary/5 border-secondary/10 flex flex-col gap-1">
-          <span className="text-[10px] font-black uppercase tracking-widest text-secondary/60">{t.stats.winRate}</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-secondary/60">{t.stats.winRate}</span>
           <span className="text-4xl font-black italic tracking-tighter text-secondary font-barlow-condensed leading-none">{stats.winRate}%</span>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="card p-4 bg-white/5 border-white/5 text-center">
-          <span className="text-[8px] font-black uppercase tracking-widest text-muted block mb-1">{t.stats.wins}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted block mb-1">{t.stats.wins}</span>
           <span className="text-xl font-bold text-green-500 font-barlow-condensed">{stats.wins}</span>
         </div>
         <div className="card p-4 bg-white/5 border-white/5 text-center">
-          <span className="text-[8px] font-black uppercase tracking-widest text-muted block mb-1">{t.stats.losses}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted block mb-1">{t.stats.losses}</span>
           <span className="text-xl font-bold text-red-500 font-barlow-condensed">{stats.losses}</span>
         </div>
         <div className="card p-4 bg-white/5 border-white/5 text-center">
-          <span className="text-[8px] font-black uppercase tracking-widest text-muted block mb-1">Gemy %</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted block mb-1">Gemy %</span>
           <span className="text-xl font-bold text-primary font-barlow-condensed">{stats.gameWinRate}%</span>
         </div>
       </div>
@@ -295,7 +342,7 @@ function StatsContent() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-3xl font-black italic tracking-tighter leading-none">{stats.winRate}%</span>
-              <span className="text-[8px] font-black uppercase tracking-widest text-muted mt-1">{t.stats.winRate}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted mt-1">{t.stats.winRate}</span>
             </div>
           </div>
         </div>
@@ -410,8 +457,8 @@ function StatsContent() {
           </div>
           
           <div className="flex justify-between mt-4 px-1">
-             <span className="text-[8px] font-bold text-muted uppercase tracking-widest">{stats.recentPerformance.length > 0 ? "Starsze" : ""}</span>
-             <span className="text-[8px] font-bold text-primary uppercase tracking-widest font-black italic">Ostatnie</span>
+             <span className="text-[10px] font-bold text-muted uppercase tracking-widest">{stats.recentPerformance.length > 0 ? "Starsze" : ""}</span>
+             <span className="text-[10px] font-bold text-primary uppercase tracking-widest font-black italic">Ostatnie</span>
           </div>
         </div>
       </section>
