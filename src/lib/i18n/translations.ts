@@ -18,6 +18,7 @@ export const translations = {
       success: "Sukces",
       ja: "Ja",
       anonim: "Anonim",
+      understand: "ROZUMIEM",
     },
     home: {
       title: "What's The Score?",
@@ -155,7 +156,27 @@ export const translations = {
       pointsWon: "Zdobyte",
       pointsLost: "Stracone",
       pointsBalance: "Bilans",
-      vsSparingPartners: "vs Sparingpartnerzy",
+      vsSparingPartners: "Skuteczność punktowa (sparingpartnerzy)",
+      opponent: "Przeciwnik",
+      sets: "Sety",
+      older: "Starsze",
+      recent: "Ostatnie",
+      moreMatchesForPartners: "Więcej rozegranych meczów pokaże tu Twoich partnerów.",
+      noDistributionData: "Rozegraj mecze z punktami (sety), aby zobaczyć rozkład wyników.",
+      help: {
+        wins: "Liczba wygranych meczów. Wygrany mecz to taki, w którym zdobyłeś więcej setów niż przeciwnik. Śledzenie tej wartości pozwala ocenić Twoją ogólną skuteczność w rywalizacji turniejowej i sparingowej.",
+        losses: "Liczba przegranych meczów. Analiza tej wartości wraz z liczbą wygranych pozwala określić Twój aktualny poziom na tle Twoich sparingpartnerów.",
+        draws: "Liczba zremisowanych meczów. Remis występuje, gdy obaj gracze wygrają taką samą liczbę setów. Częste remisy mogą świadczyć o bardzo wyrównanym poziomie gry w Twoim kręgu graczy.",
+        pointsWon: "Całkowita liczba punktów zdobytych we wszystkich rozegranych setach. Ten wskaźnik pokazuje Twoją ogólną aktywność i zdolność do regularnego punktowania, niezależnie od wyniku końcowego.",
+        pointsLost: "Całkowita liczba punktów straconych. Analizując ją w zestawieniu z punktami zdobytymi, możesz ocenić swoją skuteczność w defensywie i trzymaniu piłki (lub punktu).",
+        pointsBalance: "Różnica między punktami zdobytymi a straconymi. Dodatni bilans świadczy o Twojej przewadze technicznej, nawet jeśli wynik meczów nie zawsze to odzwierciedla.",
+        winRateMatches: "Procent wygranych meczów w stosunku do wszystkich rozegranych spotkań. To kluczowy wskaźnik Twojej mentalności zwycięzcy i umiejętności domykania meczów.",
+        winRateSets: "Procent wygranych setów. Ten wskaźnik jest czulszy niż wygrane mecze i lepiej pokazuje Twoją rzeczywistą stabilność formy w poszczególnych partiach gry.",
+        winRatePoints: "Procent punktów zdobytych w stosunku do wszystkich rozegranych punktów. To najbardziej precyzyjny (mikro) wskaźnik Twojej przewagi – mówi Ci, jak wiele z Twoich uderzeń/akcji kończy się sukcesem.",
+        recentTrend: "Twoja forma z ostatnich 10 meczów. Każdy punkt to Twoja skuteczność punktowa w danym meczu. Zielone punkty to wygrane, czerwone to przegrane. Trend rosnący mówi o poprawie Twojej gry.",
+        vsSparingPartners: "Zestawienie Twojej skuteczności przeciwko najczęstszym przeciwnikom. Pozwala zidentyfikować graczy, na których masz 'patent', oraz tych, z którymi musisz jeszcze popracować nad strategią.",
+        pointsDistribution: "Rozkład wyników punktowych Twoich setów. Histogram pokazuje, jak dużą przewagą (lub stratą) kończą się zazwyczaj Twoje partie. Pomoże Ci to ocenić, czy Twoje gry są wyrównane, czy jednostronne."
+      }
     },
     tournament: {
       title: "Turniej",
@@ -194,6 +215,7 @@ export const translations = {
       success: "Success",
       ja: "Me",
       anonim: "Anonymous",
+      understand: "UNDERSTAND",
     },
     home: {
       title: "What's The Score?",
@@ -331,7 +353,27 @@ export const translations = {
       pointsWon: "Scored",
       pointsLost: "Lost",
       pointsBalance: "Balance",
-      vsSparingPartners: "vs Sparring Partners",
+      vsSparingPartners: "Points performance (sparring partners)",
+      opponent: "Opponent",
+      sets: "Sets",
+      older: "Older",
+      recent: "Recent",
+      moreMatchesForPartners: "More played matches will show your partners here.",
+      noDistributionData: "Play matches with points (sets) to see the score distribution.",
+      help: {
+        wins: "Number of matches won. A match is won if you win more sets than your opponent. Tracking this helps assess your overall competitive performance in tournaments and sparring matches.",
+        losses: "Number of matches lost. Analyzing this alongside wins helps determine your current standing relative to your sparring partners.",
+        draws: "Number of drawn matches. A draw occurs when both players win an equal number of sets. Frequent draws suggest very balanced skill levels within your player circle.",
+        pointsWon: "Total points scored across all sets played. This metric shows your general activity and consistency in scoring, regardless of the final outcome.",
+        pointsLost: "Total points conceded. By comparing this with points scored, you can evaluate your defensive effectiveness and ball control.",
+        pointsBalance: "The difference between points scored and lost. A positive balance indicates a technical advantage, even if match results don't always reflect it.",
+        winRateMatches: "Percentage of won matches relative to all matches played. This is a key indicator of your 'winner's mentality' and ability to close out matches.",
+        winRateSets: "Percentage of sets won. This metric is more sensitive than match wins and better shows your actual performance stability across individual games.",
+        winRatePoints: "Percentage of points won relative to all points played. This is the most precise (micro) indicator of your advantage – telling you how many of your shots/actions succeed.",
+        recentTrend: "Your form over the last 10 matches. Each point represents your point efficiency in a given match. Green points are wins, red are losses. An upward trend suggests game improvement.",
+        vsSparingPartners: "Comparison of your effectiveness against frequent opponents. Helps identify players you 'own' and those you need to work on your strategy against.",
+        pointsDistribution: "Distribution of your set point results. The histogram shows the margin of your typical wins or losses in games. It helps assess whether your games are usually close or one-sided."
+      }
     },
     tournament: {
       title: "Tournament",
