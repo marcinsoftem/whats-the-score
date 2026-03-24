@@ -37,8 +37,9 @@ export default function Navbar() {
     router.push('/login')
   }
 
-  // Don't show navbar on login/register pages
-  if (pathname === '/login' || pathname === '/register') return null
+  // Don't show navbar on auth pages
+  const authPages = ['/login', '/register', '/login/forgot-password', '/login/reset-password', '/auth/auth-code-error']
+  if (authPages.some(p => pathname?.startsWith(p))) return null
 
   const isNavItemActive = (path: string) => {
     // If we're navigating somewhere, only that path is "active"
