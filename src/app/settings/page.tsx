@@ -138,6 +138,17 @@ function SettingsContent() {
     }
   };
 
+  const handleLanguageChange = async (newLang: 'pl' | 'en') => {
+    setLanguage(newLang);
+    
+    // If logged in, also update Supabase user metadata
+    if (session?.user) {
+      await supabase.auth.updateUser({
+        data: { language: newLang }
+      });
+    }
+  };
+
   const languages = [
     { code: 'pl', name: t.settings.pl },
     { code: 'en', name: t.settings.en },
@@ -253,7 +264,7 @@ function SettingsContent() {
             {languages.map((lang) => (
               <button
                 key={lang.code}
-                onClick={() => setLanguage(lang.code as 'pl' | 'en')}
+                onClick={() => handleLanguageChange(lang.code as 'pl' | 'en')}
                 className={`flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] ${
                   language === lang.code 
                     ? "bg-primary/10 border-primary/50 text-foreground" 

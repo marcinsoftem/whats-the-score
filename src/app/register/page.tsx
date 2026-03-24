@@ -94,6 +94,7 @@ function RegisterContent() {
           nickname,
           avatar_url: avatarUrl,
           type: 'real',
+          language: language,
           invite_id: cleanInviteId, // Passed to DB trigger for automated claiming
         },
       },
