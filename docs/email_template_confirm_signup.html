@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;700&display=swap');
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #121212;
+      font-family: 'Barlow', Arial, sans-serif;
+      color: #ffffff;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #121212;
+      padding: 60px 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: #1a1a1a;
+      border: 1px solid #333333;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: #C6FF00;
+      text-transform: uppercase;
+      font-style: italic;
+      letter-spacing: -1px;
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px;
+      text-transform: uppercase;
+      font-style: italic;
+      margin-bottom: 15px;
+      color: #ffffff;
+    }
+    p {
+      color: #aaaaaa;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 35px;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #C6FF00;
+      color: #000000 !important;
+      padding: 18px 36px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .footer {
+      margin-top: 50px;
+      padding-top: 25px;
+      border-top: 1px solid #333;
+      font-size: 13px;
+      color: #888888;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="logo">What's The Score?</div>
+      
+      {{ if eq .Data.language "pl" }}
+        <h1>Potwierdź swój e-mail</h1>
+        <p>Witaj w What's The Score! Przejmij kontrolę nad swoją grą. Kliknij poniższy przycisk, aby zweryfikować adres e-mail i aktywować konto.</p>
+        <a href="{{ .ConfirmationURL }}" class="btn">Potwierdź adres</a>
+      {{ else }}
+        <h1>Confirm your email</h1>
+        <p>Welcome to What's The Score! Take control of your game. Click the button below to verify your email address and activate your account.</p>
+        <a href="{{ .ConfirmationURL }}" class="btn">Confirm email</a>
+      {{ end }}
+
+      <div class="footer">
+        &copy; 2026 What's The Score? - Take control of your game
+      </div>
+    </div>
+  </div>
+</body>
+</html>
