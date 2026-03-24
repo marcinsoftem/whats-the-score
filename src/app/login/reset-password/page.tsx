@@ -15,10 +15,17 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(true)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
+    // Detect PWA mode
+    setIsStandalone(
+      window.matchMedia('(display-mode: standalone)').matches || 
+      (navigator as any).standalone === true
+    )
+
     // Basic check to see if user is actually authenticated (handled by callback exchange)
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession()
@@ -74,6 +81,11 @@ export default function ResetPasswordPage() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">{t.common.success}</h1>
             <p className="text-muted text-base px-4">{t.auth.passwordChanged}</p>
+            {!isStandalone && (
+              <p className="text-primary text-xs font-bold uppercase tracking-widest mt-4 animate-pulse px-8">
+                {t.auth.returnToPwa}
+              </p>
+            )}
           </div>
           <Link 
             href="/login" 

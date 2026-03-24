@@ -18,6 +18,7 @@ function RegisterContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -27,6 +28,12 @@ function RegisterContent() {
   const inviteSeed = searchParams.get('seed')
 
   useEffect(() => {
+    // Detect PWA mode
+    setIsStandalone(
+      window.matchMedia('(display-mode: standalone)').matches || 
+      (navigator as any).standalone === true
+    )
+    
     if (inviteNickname) setNickname(inviteNickname)
     if (inviteSeed) setAvatarSeed(inviteSeed)
   }, [inviteNickname, inviteSeed])
@@ -134,6 +141,11 @@ function RegisterContent() {
             <p className="text-muted text-base leading-relaxed px-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
               {t.auth.signUpSuccessDesc}
             </p>
+            {!isStandalone && (
+              <p className="text-primary text-xs font-bold uppercase tracking-widest mt-4 animate-pulse px-8">
+                {t.auth.returnToPwa}
+              </p>
+            )}
           </div>
           <div className="pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
             <Link 

@@ -3,6 +3,7 @@
   "short_name": "WTS",
   "description": "Przejmij kontrolę nad swoją grą squash.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#C6FF00",
