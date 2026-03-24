@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient, isConfigured } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { UserPlus, Loader2, FastForward, CheckCircle2, Globe } from 'lucide-react'
+import { UserPlus, Loader2, FastForward, CheckCircle2, Globe, Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 function RegisterContent() {
@@ -12,6 +12,7 @@ function RegisterContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [step, setStep] = useState(1)
   const [avatarSeed, setAvatarSeed] = useState(() => crypto.randomUUID())
   const [loading, setLoading] = useState(false)
@@ -100,13 +101,19 @@ function RegisterContent() {
 
     if (signUpError) {
       console.error('Registration error details:', signUpError);
-      if (signUpError.message.includes('rate limit')) {
-        setError('Osiągnięto limit wysyłki e-maili. Odczekaj chwilę lub poproś administratora o wyłączenie potwierdzania e-maili w Supabase.')
+      
+      let errorMessage = t.auth.errors.generic;
+      const lowerError = signUpError.message.toLowerCase();
+      
+      if (lowerError.includes('rate limit')) {
+        errorMessage = t.auth.errors.rateLimit;
+      } else if (lowerError.includes('already exists') || lowerError.includes('registered')) {
+        errorMessage = t.players.alreadyExists;
       } else {
-        // Show more details if available in the error object (e.g. from trigger)
-        const detailedError = signUpError.message + (signUpError.cause ? ` (${signUpError.cause})` : '');
-        setError(detailedError)
+        errorMessage = signUpError.message;
       }
+      
+      setError(errorMessage)
       setLoading(false)
     } else {
       router.push('/login?message=Check your email to confirm your account')
@@ -129,9 +136,9 @@ function RegisterContent() {
             />
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} noValidate className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
+              <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-sm font-bold flex items-center justify-center text-center shadow-[0_0_20px_rgba(239,68,68,0.1)]">
                 {error}
               </div>
             )}
@@ -144,7 +151,7 @@ function RegisterContent() {
                     type="email"
                     required
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                    placeholder="twoj@email.com"
+                    placeholder={t.auth.emailPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -152,14 +159,23 @@ function RegisterContent() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.password}</label>
-                  <input
-                    type="password"
-                    required
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <div className="relative group">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      className="w-full bg-black/40 border border-white/10 rounded-xl p-3 pr-12 focus:outline-none focus:border-primary transition-colors text-white"
+                      placeholder={t.auth.passwordPlaceholder}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors p-1 rounded-lg"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button

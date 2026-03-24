@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { createClient, isConfigured } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogIn, Loader2, Globe } from 'lucide-react'
+import { LogIn, Loader2, Globe, Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function LoginPage() {
   const { t, language, setLanguage } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -18,6 +19,13 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Manual format check to prevent browser from silently blocking submission
+    if (!email.includes('@')) {
+      setError(t.auth.errors.invalidEmail);
+      return;
+    }
+
     setLoading(true)
     setError(null)
 
@@ -34,7 +42,20 @@ export default function LoginPage() {
     })
 
     if (signInError) {
-      setError(signInError.message)
+      let errorMessage = t.auth.errors.generic;
+      const lowerError = signInError.message.toLowerCase();
+      
+      if (lowerError.includes('invalid login credentials')) {
+        errorMessage = t.auth.errors.invalidCredentials;
+      } else if (lowerError.includes('email not confirmed')) {
+        errorMessage = t.auth.errors.emailNotConfirmed;
+      } else if (lowerError.includes('rate limit')) {
+        errorMessage = t.auth.errors.rateLimit;
+      } else if (lowerError.includes('email format')) {
+        errorMessage = t.auth.errors.invalidEmail;
+      }
+      
+      setError(errorMessage)
       setLoading(false)
     } else {
       router.push('/')
@@ -51,9 +72,9 @@ export default function LoginPage() {
         </div>
 
         <div className="card shadow-2xl min-h-[360px] flex flex-col justify-center p-6">
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} noValidate className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
+              <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-sm font-bold flex items-center justify-center text-center shadow-[0_0_20px_rgba(239,68,68,0.1)]">
                 {error}
               </div>
             )}
@@ -64,7 +85,7 @@ export default function LoginPage() {
                 type="email"
                 required
                 className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                placeholder="twoj@email.com"
+                placeholder={t.auth.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -72,14 +93,31 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.password}</label>
-              <input
-                type="password"
-                required
-                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 pr-12 focus:outline-none focus:border-primary transition-colors text-white"
+                  placeholder={t.auth.passwordPlaceholder}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors p-1 rounded-lg"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <div className="flex justify-end pr-1">
+                <Link 
+                  href="/login/forgot-password" 
+                  className="text-xs font-bold text-muted hover:text-primary transition-colors italic uppercase tracking-wider"
+                >
+                  {t.auth.forgotPassword}
+                </Link>
+              </div>
             </div>
 
             <button
