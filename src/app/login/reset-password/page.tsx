@@ -53,7 +53,11 @@ export default function ResetPasswordPage() {
     })
 
     if (resetError) {
-      setError(resetError.message)
+      let errorMessage = resetError.message;
+      if (resetError.message.toLowerCase().includes('should be different from the old password')) {
+        errorMessage = t.auth.errors.samePassword;
+      }
+      setError(errorMessage)
       setLoading(false)
     } else {
       setSuccess(true)
