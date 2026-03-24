@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Key, Loader2, Globe, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Key, Loader2, Globe, Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function ResetPasswordPage() {
@@ -66,15 +66,10 @@ export default function ResetPasswordPage() {
   if (success) {
     return (
       <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
-        <div className="w-full max-w-md space-y-8 text-center">
-          <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
-            </div>
-          </div>
+        <div className="w-full max-w-md space-y-6 text-center">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">{t.common.success}</h1>
-            <p className="text-muted text-lg">{t.auth.passwordChanged}</p>
+            <p className="text-muted text-base px-4">{t.auth.passwordChanged}</p>
           </div>
           <Link 
             href="/login" 

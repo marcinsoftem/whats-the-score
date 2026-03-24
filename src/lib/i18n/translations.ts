@@ -134,7 +134,7 @@ export const translations = {
       newPasswordPlaceholder: "Wpisz nowe hasło",
       confirmPasswordPlaceholder: "Powtórz nowe hasło",
       saveNewPasswordButton: "ZAPISZ NOWE HASŁO",
-      linkSent: "Link do resetowania linku został wysłany na Twój e-mail!",
+      linkSent: "Link do resetowania hasła został wysłany na Twój e-mail!",
       passwordChanged: "Hasło zostało pomyślnie zmienione! Możesz się teraz zalogować.",
       passwordsDoNotMatch: "Hasła nie są identyczne",
     },
