@@ -137,6 +137,8 @@ export const translations = {
       linkSent: "Link do resetowania hasła został wysłany na Twój e-mail!",
       passwordChanged: "Hasło zostało pomyślnie zmienione! Możesz się teraz zalogować.",
       passwordsDoNotMatch: "Hasła nie są identyczne",
+      signUpSuccessTitle: "KONTO UTWORZONE!",
+      signUpSuccessDesc: "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Sprawdź pocztę (również folder Spam) i kliknij w link, aby aktywować konto.",
     },
     settings: {
       title: "Ustawienia",
@@ -358,6 +360,8 @@ export const translations = {
       linkSent: "Reset link has been sent to your email!",
       passwordChanged: "Password changed successfully! You can now log in.",
       passwordsDoNotMatch: "Passwords do not match",
+      signUpSuccessTitle: "ACCOUNT CREATED!",
+      signUpSuccessDesc: "We've sent an activation link to your email address. Please check your inbox (including Spam folder) and click the link to activate your account.",
     },
     settings: {
       title: "Settings",

@@ -17,6 +17,7 @@ function RegisterContent() {
   const [avatarSeed, setAvatarSeed] = useState(() => crypto.randomUUID())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSuccess, setIsSuccess] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -85,7 +86,7 @@ function RegisterContent() {
     const cleanInviteId = isValidUUID(inviteId) ? inviteId : null;
     console.log('Registering with:', { email, nickname, cleanInviteId });
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -117,8 +118,35 @@ function RegisterContent() {
       setError(errorMessage)
       setLoading(false)
     } else {
-      router.push('/login?message=Check your email to confirm your account')
+      setIsSuccess(true)
+      setLoading(false)
     }
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
+        <div className="w-full max-w-md space-y-8 text-center">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-black italic tracking-tighter text-primary animate-in fade-in slide-in-from-top-4 duration-500">
+              {t.auth.signUpSuccessTitle}
+            </h1>
+            <p className="text-muted text-base leading-relaxed px-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
+              {t.auth.signUpSuccessDesc}
+            </p>
+          </div>
+          <div className="pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+            <Link 
+              href="/login" 
+              className="btn-primary w-full h-[56px] text-lg flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(198,255,0,0.2)]"
+            >
+              <CheckCircle2 className="w-6 h-6" />
+              {t.auth.signIn.toUpperCase()}
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
