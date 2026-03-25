@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (otp.length !== 6) return
+    if (otp.length !== 8) return
     
     setVerificationLoading(true)
     setError(null)
@@ -143,16 +143,16 @@ export default function ForgotPasswordPage() {
                   required
                   autoFocus
                   className="w-full h-[56px] bg-white/5 border-2 border-primary/20 rounded-2xl p-4 text-center text-3xl font-black tracking-[0.4em] focus:outline-none focus:border-primary transition-all text-white placeholder:text-white/5 uppercase"
-                  placeholder="------"
-                  maxLength={6}
+                  placeholder="--------"
+                  maxLength={8}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0, 8))}
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={verificationLoading || otp.length !== 6}
+                disabled={verificationLoading || otp.length !== 8}
                 className="btn-primary w-full h-[56px] text-lg font-black italic tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_30px_rgba(198,255,0,0.15)] rounded-2xl uppercase"
               >
                 {verificationLoading ? (
