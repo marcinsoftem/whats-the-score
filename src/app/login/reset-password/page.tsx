@@ -259,3 +259,15 @@ function ResetPasswordContent() {
     </div>
   )
 }
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-[100dvh] w-full flex items-center justify-center bg-background text-foreground fixed inset-0 z-[200]">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
+  )
+}
