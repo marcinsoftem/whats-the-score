@@ -144,6 +144,10 @@ export const translations = {
       authenticating: "AUTORYZACJA...",
       authorizeAction: "ZATWIERDŹ ZMIANĘ HASŁA",
       welcomeBack: "Witaj ponownie! Jesteś o krok od odzyskania dostępu do swojego konta.",
+      verificationCode: "KOD WERYFIKACYJNY",
+      enterCode: "Wpisz 6-cyfrowy kod otrzymany e-mailem",
+      verifyButton: "WERYFIKUJ KOD",
+      invalidCodeError: "Nieprawidłowy lub wygasły kod. Spróbuj ponownie.",
     },
     settings: {
       title: "Ustawienia",
@@ -372,6 +376,10 @@ export const translations = {
       authenticating: "AUTHENTICATING...",
       authorizeAction: "AUTHORIZE PASSWORD RESET",
       welcomeBack: "Welcome back! You're one step away from reclaiming your account.",
+      verificationCode: "VERIFICATION CODE",
+      enterCode: "Enter the 6-digit code received by email",
+      verifyButton: "VERIFY CODE",
+      invalidCodeError: "Invalid or expired code. Please try again.",
     },
     settings: {
       title: "Settings",
