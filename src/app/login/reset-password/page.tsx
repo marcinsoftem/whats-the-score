@@ -23,7 +23,6 @@ function ResetPasswordContent() {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession()
       if (!data.session && !success) {
-        // If no session and not successfully reset yet, redirect to login
         router.replace('/login')
       }
     }
@@ -60,7 +59,6 @@ function ResetPasswordContent() {
     } else {
       setSuccess(true)
       setLoading(false)
-      // Log out after success to ensure they login with new password
       await supabase.auth.signOut()
     }
   }
@@ -69,18 +67,15 @@ function ResetPasswordContent() {
     return (
       <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
         <div className="w-full max-w-md space-y-6 text-center animate-in zoom-in duration-500">
-          <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-primary" />
-          </div>
           <div className="space-y-4">
-            <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic tracking-[0.1em]">{t.common.success}</h1>
-            <p className="text-muted text-base px-4">{t.auth.passwordChanged}</p>
+            <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase">{t.common.success}</h1>
+            <p className="text-muted text-base px-8 font-bold uppercase tracking-widest opacity-60 italic">{t.auth.passwordChanged}</p>
           </div>
           <Link 
             href="/login" 
-            className="btn-primary w-full h-[64px] text-lg flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(198,255,0,0.2)]"
+            className="btn-primary w-full h-[56px] text-lg font-black italic tracking-widest flex items-center justify-center rounded-2xl shadow-[0_8px_30px_rgba(198,255,0,0.15)] uppercase"
           >
-            {t.common.login.toUpperCase()}
+            {t.common.login}
           </Link>
         </div>
       </div>
@@ -89,28 +84,28 @@ function ResetPasswordContent() {
 
   return (
     <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-black italic tracking-tighter text-primary uppercase">{t.home.title}</h1>
+      <div className="w-full max-w-md space-y-2">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase">{t.home.title}</h1>
           <p className="text-muted mt-2 font-bold uppercase tracking-widest text-xs opacity-60 italic">{t.auth.resetPasswordTitle}</p>
         </div>
 
-        <div className="card shadow-2xl p-8">
+        <div className="card shadow-2xl p-8 bg-black/40 border border-white/5 rounded-[32px] backdrop-blur-xl">
           <form onSubmit={handleResetPassword} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-xs font-bold flex items-center justify-center text-center">
+              <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-[10px] font-black uppercase tracking-widest text-center italic">
                 {error}
               </div>
             )}
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] italic">{t.auth.password}</label>
-                <div className="relative group">
+                <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] italic ml-1">{t.auth.password}</label>
+                <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     required
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 pr-12 focus:outline-none focus:border-primary transition-colors text-white font-bold"
+                    className="w-full h-[56px] bg-white/5 border border-white/10 rounded-2xl px-5 pr-12 focus:outline-none focus:border-primary transition-colors text-white font-bold"
                     placeholder={t.auth.passwordPlaceholder}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -126,11 +121,11 @@ function ResetPasswordContent() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] italic">{t.auth.confirmPassword}</label>
+                <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] italic ml-1">{t.auth.confirmPassword}</label>
                 <input
                   type={showPassword ? "text" : "password"}
                   required
-                  className="w-full bg-black/40 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-primary transition-colors text-white font-bold"
+                  className="w-full h-[56px] bg-white/5 border border-white/10 rounded-2xl px-5 focus:outline-none focus:border-primary transition-colors text-white font-bold"
                   placeholder={t.auth.confirmPassword}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -141,26 +136,23 @@ function ResetPasswordContent() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full h-[64px] text-lg mt-4 shadow-[0_10px_30px_rgba(198,255,0,0.1)]"
+              className="btn-primary w-full h-[56px] text-lg font-black italic tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_30px_rgba(198,255,0,0.15)] rounded-2xl uppercase"
             >
               {loading ? (
                 <Loader2 className="w-6 h-6 animate-spin mx-auto" />
               ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <Key className="w-5 h-5" />
-                  {t.auth.resetPasswordButton}
-                </div>
+                t.auth.saveNewPasswordButton
               )}
             </button>
           </form>
         </div>
 
-        <div className="flex justify-center mt-4 text-center">
+        <div className="flex justify-center mt-8 text-center">
           <button 
             onClick={() => setLanguage(language === 'pl' ? 'en' : 'pl')}
-            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 hover:bg-primary/20 transition-all italic mx-auto"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 hover:bg-primary/20 px-4 py-2 rounded-full border border-primary/10 transition-all italic mx-auto"
           >
-            <Globe className="w-3 h-3" />
+            <Globe className="w-3.5 h-3.5" />
             {language === 'pl' ? 'English (EN)' : 'Polski (PL)'}
           </button>
         </div>
