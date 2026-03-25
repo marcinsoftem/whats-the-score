@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Key, Loader2, Globe, Eye, EyeOff } from 'lucide-react'
+import { Key, Loader2, Globe, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function ResetPasswordPage() {
@@ -17,6 +17,8 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [isStandalone, setIsStandalone] = useState(true)
   const [isExchanging, setIsExchanging] = useState(false)
+  const [exchangeCode, setExchangeCode] = useState<string | null>(null)
+  const [hasSession, setHasSession] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -27,40 +29,96 @@ export default function ResetPasswordPage() {
       (navigator as any).standalone === true
     )
 
-    const handleAuth = async () => {
+    const checkInitialState = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       
-      // If there's a code, we need to exchange it for a session ON THE CLIENT
       if (code) {
-        setIsExchanging(true);
-        console.log('Exchanging code for session...');
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        setIsExchanging(false);
-        
-        if (error) {
-          console.error('Code exchange failed:', error);
-          router.replace('/auth/auth-code-error');
-          return;
-        }
-        
-        // After successful exchange, we can strip the code from URL 
-        // to prevent re-exchange on refresh
-        const newUrl = window.location.pathname + (window.location.search.replace(/code=[^&]*(&|$)/, '').replace(/\?$/, ''));
-        window.history.replaceState({}, '', newUrl);
+        setExchangeCode(code);
       }
 
-      // Check for session after possible exchange
-      const { data } = await supabase.auth.getSession()
-      if (!data.session) {
-        if (!success && !isExchanging) {
-          router.replace('/login')
-        }
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setHasSession(true);
       }
     }
 
-    handleAuth()
-  }, [supabase.auth, router, success])
+    checkInitialState()
+  }, [supabase.auth])
+
+  const handleManualExchange = async () => {
+    if (!exchangeCode) return;
+    
+    setIsExchanging(true);
+    const { error } = await supabase.auth.exchangeCodeForSession(exchangeCode);
+    
+    if (error) {
+      console.error('Code exchange failed:', error);
+      router.replace('/auth/auth-code-error');
+      return;
+    }
+    
+    // Success - clean up URL and update state
+    const newUrl = window.location.pathname + (window.location.search.replace(/code=[^&]*(&|$)/, '').replace(/\?$/, ''));
+    window.history.replaceState({}, '', newUrl);
+    setExchangeCode(null);
+    setHasSession(true);
+    setIsExchanging(false);
+  }
+
+  // Use the manual confirmation screen if we have a code and NO session yet
+  if (exchangeCode && !hasSession) {
+    return (
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
+        <div className="w-full max-w-md space-y-8 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_50px_rgba(198,255,0,0.1)]">
+            <Loader2 className={`w-12 h-12 text-primary ${isExchanging ? 'animate-spin' : ''}`} />
+          </div>
+          
+          <div className="space-y-4">
+            <h1 className="text-4xl font-black italic tracking-tighter text-white">
+              {t.auth.forgotPasswordTitle}
+            </h1>
+            <p className="text-muted text-base leading-relaxed px-6">
+              {t.auth.welcomeBack}
+            </p>
+          </div>
+
+          <div className="pt-8">
+            <button 
+              onClick={handleManualExchange}
+              disabled={isExchanging}
+              className="btn-primary w-full h-[64px] text-lg flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(198,255,0,0.2)]"
+            >
+              {isExchanging ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="w-6 h-6" />
+                  {t.auth.authorizeAction}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Standard session check (if no code and no session, redirect to login)
+  useEffect(() => {
+    if (!exchangeCode && !hasSession && !success && !isExchanging) {
+      const checkSession = async () => {
+        const { data } = await supabase.auth.getSession()
+        if (!data.session) {
+          router.replace('/login')
+        } else {
+          setHasSession(true);
+        }
+      }
+      checkSession()
+    }
+  }, [exchangeCode, hasSession, success, isExchanging, router, supabase.auth])
 
   if (isExchanging) {
     return (
