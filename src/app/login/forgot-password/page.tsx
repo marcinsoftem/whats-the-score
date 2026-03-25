@@ -97,18 +97,18 @@ export default function ForgotPasswordPage() {
                   type="text"
                   required
                   autoFocus
-                  className="w-full bg-black/40 border-2 border-primary/20 rounded-2xl p-4 text-center text-3xl font-black tracking-[0.5em] focus:outline-none focus:border-primary transition-all text-white placeholder:text-white/5"
-                  placeholder="000000"
-                  maxLength={6}
+                  className="w-full bg-black/40 border-2 border-primary/20 rounded-2xl p-4 text-center text-3xl font-black tracking-[0.5em] focus:outline-none focus:border-primary transition-all text-white placeholder:text-white/5 uppercase"
+                  placeholder="********"
+                  maxLength={12}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => setOtp(e.target.value.replace(/\s/g, ''))}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={verificationLoading || otp.length < 6}
-                className="btn-primary w-full h-[64px] text-lg shadow-[0_10px_30px_rgba(198,255,0,0.2)]"
+                className="btn-primary w-full h-[64px] text-lg shadow-[0_10px_30px_rgba(198,255,0,0.2)] font-black uppercase tracking-widest italic"
               >
                 {verificationLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin mx-auto" />
