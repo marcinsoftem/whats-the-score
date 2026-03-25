@@ -141,6 +141,7 @@ export const translations = {
       signUpSuccessTitle: "KONTO UTWORZONE!",
       signUpSuccessDesc: "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Sprawdź pocztę (również folder Spam) i kliknij w link, aby aktywować konto.",
       returnToPwa: "Możesz teraz zamknąć to okno i wrócić do swojej zainstalowanej aplikacji, aby się zalogować.",
+      authenticating: "AUTORYZACJA...",
     },
     settings: {
       title: "Ustawienia",
@@ -366,6 +367,7 @@ export const translations = {
       signUpSuccessTitle: "ACCOUNT CREATED!",
       signUpSuccessDesc: "We've sent an activation link to your email address. Please check your inbox (including Spam folder) and click the link to activate your account.",
       returnToPwa: "You can now close this window and return to your installed app to log in.",
+      authenticating: "AUTHENTICATING...",
     },
     settings: {
       title: "Settings",

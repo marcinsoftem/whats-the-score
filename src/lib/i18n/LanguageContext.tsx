@@ -15,6 +15,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>('pl');
 
   useEffect(() => {
+    // 1. Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const langParam = urlParams.get('lang') as Language;
+    
+    if (langParam && (langParam === 'pl' || langParam === 'en')) {
+      setLanguage(langParam);
+      return;
+    }
+
+    // 2. Check localStorage
     const savedLang = localStorage.getItem('wts_language') as Language;
     if (savedLang && (savedLang === 'pl' || savedLang === 'en')) {
       setLanguageState(savedLang);

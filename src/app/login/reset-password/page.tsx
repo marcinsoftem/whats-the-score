@@ -16,6 +16,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isStandalone, setIsStandalone] = useState(true)
+  const [isExchanging, setIsExchanging] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -26,18 +27,51 @@ export default function ResetPasswordPage() {
       (navigator as any).standalone === true
     )
 
-    // Basic check to see if user is actually authenticated (handled by callback exchange)
-    const checkSession = async () => {
+    const handleAuth = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      
+      // If there's a code, we need to exchange it for a session ON THE CLIENT
+      if (code) {
+        setIsExchanging(true);
+        console.log('Exchanging code for session...');
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        setIsExchanging(false);
+        
+        if (error) {
+          console.error('Code exchange failed:', error);
+          router.replace('/auth/auth-code-error');
+          return;
+        }
+        
+        // After successful exchange, we can strip the code from URL 
+        // to prevent re-exchange on refresh
+        const newUrl = window.location.pathname + (window.location.search.replace(/code=[^&]*(&|$)/, '').replace(/\?$/, ''));
+        window.history.replaceState({}, '', newUrl);
+      }
+
+      // Check for session after possible exchange
       const { data } = await supabase.auth.getSession()
       if (!data.session) {
-        // If no session, they shouldn't be here unless they just completed the flow
-        if (!success) {
+        if (!success && !isExchanging) {
           router.replace('/login')
         }
       }
     }
-    checkSession()
+
+    handleAuth()
   }, [supabase.auth, router, success])
+
+  if (isExchanging) {
+    return (
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground">
+        <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+        <p className="text-muted text-sm font-black uppercase tracking-widest italic animate-pulse">
+          {t.auth.authenticating}
+        </p>
+      </div>
+    )
+  }
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()

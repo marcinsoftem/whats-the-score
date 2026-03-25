@@ -33,8 +33,8 @@ export default function ForgotPasswordPage() {
 
     // Determine return URL
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    // We send code which will be exchanged by the callback route and then redirect to reset-password
-    const redirectTo = `${origin}/auth/callback?next=/login/reset-password`
+    // We redirect directly to reset-password and pass current UI language
+    const redirectTo = `${origin}/login/reset-password?lang=${language}`
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
