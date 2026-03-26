@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import pkg from "@/../package.json";
 
 export default function AboutSettingsPage() {
   return (
@@ -17,8 +18,12 @@ export default function AboutSettingsPage() {
 
 function AboutSettingsContent() {
   const { t } = useLanguage();
-  const [isPwaExpanded, setIsPwaExpanded] = useState(false);
-  const [isReleaseNotesExpanded, setIsReleaseNotesExpanded] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const version = pkg.version;
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
 
   return (
     <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen p-6">
@@ -42,14 +47,48 @@ function AboutSettingsContent() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {/* Collapsible items logic same as before... */}
+          {/* Author Section */}
           <button
-            onClick={() => {
-              setIsPwaExpanded(!isPwaExpanded);
-              if (isReleaseNotesExpanded) setIsReleaseNotesExpanded(false);
-            }}
+            onClick={() => toggleSection('author')}
             className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] ${
-              isPwaExpanded 
+              expandedSection === 'author'
+                ? "bg-primary/10 border-primary/50 text-foreground" 
+                : "bg-white/5 border-white/5 text-muted hover:border-white/20"
+            }`}
+          >
+            <h2 className="text-sm font-black uppercase tracking-widest italic">
+              {t.settings.author}
+            </h2>
+            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${expandedSection === 'author' ? 'rotate-180 text-primary' : 'text-muted'}`} />
+          </button>
+
+          <AnimatePresence>
+            {expandedSection === 'author' && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="card p-6 bg-primary/5 border-primary/10 flex flex-col gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted italic">Kontakt</span>
+                  <a 
+                    href="mailto:marcin@softem.pl" 
+                    className="text-sm font-bold text-primary hover:underline transition-all"
+                  >
+                    marcin@softem.pl
+                  </a>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* PWA Section */}
+          <button
+            onClick={() => toggleSection('pwa')}
+            className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] ${
+              expandedSection === 'pwa'
                 ? "bg-primary/10 border-primary/50 text-foreground" 
                 : "bg-white/5 border-white/5 text-muted hover:border-white/20"
             }`}
@@ -57,11 +96,11 @@ function AboutSettingsContent() {
             <h2 className="text-sm font-black uppercase tracking-widest italic">
               {t.settings.installPwa}
             </h2>
-            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isPwaExpanded ? 'rotate-180 text-primary' : 'text-muted'}`} />
+            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${expandedSection === 'pwa' ? 'rotate-180 text-primary' : 'text-muted'}`} />
           </button>
 
           <AnimatePresence>
-            {isPwaExpanded && (
+            {expandedSection === 'pwa' && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -89,13 +128,11 @@ function AboutSettingsContent() {
             )}
           </AnimatePresence>
 
+          {/* Release Notes Section */}
           <button
-            onClick={() => {
-              setIsReleaseNotesExpanded(!isReleaseNotesExpanded);
-              if (isPwaExpanded) setIsPwaExpanded(false);
-            }}
+            onClick={() => toggleSection('releases')}
             className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] ${
-              isReleaseNotesExpanded 
+              expandedSection === 'releases'
                 ? "bg-primary/10 border-primary/50 text-foreground" 
                 : "bg-white/5 border-white/5 text-muted hover:border-white/20"
             }`}
@@ -103,11 +140,11 @@ function AboutSettingsContent() {
             <h2 className="text-sm font-black uppercase tracking-widest italic">
               {t.settings.releaseNotes}
             </h2>
-            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isReleaseNotesExpanded ? 'rotate-180 text-primary' : 'text-muted'}`} />
+            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${expandedSection === 'releases' ? 'rotate-180 text-primary' : 'text-muted'}`} />
           </button>
 
           <AnimatePresence>
-            {isReleaseNotesExpanded && (
+            {expandedSection === 'releases' && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -120,9 +157,9 @@ function AboutSettingsContent() {
                     <div key={release.version} className="space-y-2">
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tighter uppercase italic">{release.version}</span>
-                        <span className="text-[10px] font-black text-muted/40 uppercase tracking-widest">{release.date}</span>
+                        <span className="text-xs font-black text-muted/40 uppercase tracking-widest">{release.date}</span>
                       </div>
-                      <p className="text-xs text-muted/80 leading-snug">
+                      <p className="text-sm text-muted/80 leading-snug">
                         {release.note}
                       </p>
                     </div>
@@ -139,7 +176,7 @@ function AboutSettingsContent() {
               {t.settings.version}
             </span>
             <span className="text-xs font-black text-primary italic">
-              1.0.0
+              {version}
             </span>
           </div>
         </footer>

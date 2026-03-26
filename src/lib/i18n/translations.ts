@@ -168,6 +168,7 @@ export const translations = {
       saveProfile: "ZAPISZ PROFIL",
       profileSaved: "Profil zaktualizowany!",
       releaseNotes: "Noty wydania",
+      author: "Autor",
       releases: {
         r100: {
           version: "1.0.0",
@@ -408,6 +409,7 @@ export const translations = {
       saveProfile: "SAVE PROFILE",
       profileSaved: "Profile updated!",
       releaseNotes: "Release notes",
+      author: "Author",
       releases: {
         r100: {
           version: "1.0.0",
