@@ -156,7 +156,7 @@ export const translations = {
       pl: "Polski",
       en: "Angielski",
       about: "O aplikacji",
-      aboutDesc: "What's The Score? to prosta i intuicyjna aplikacja do śledzenia wyników Twoich meczów. Stworzona, abyś mógł skupić się na grze, a nie na liczeniu punktów.",
+      aboutDesc: "What's The Score? to prosta i wygodna aplikacja do rejestrowania wyników meczów squasha. Umożliwia śledzenie historii gier, oferuje tryb turniejowy do organizacji rozgrywek oraz statystyki, które pomagają analizować postępy i poprawiać swoją grę.",
       version: "Wersja",
       logout: "Wyloguj się",
       logoutConfirm: "Czy na pewno chcesz się wylogować?",
@@ -166,7 +166,15 @@ export const translations = {
       pwaDesc: "Korzystaj z What's The Score? jak z natywnej aplikacji. Szybszy dostęp, brak pasków przeglądarki i lepsze doświadczenie.",
       profile: "Twój profil",
       saveProfile: "ZAPISZ PROFIL",
-      profileSaved: "Profil zaktualizowany!"
+      profileSaved: "Profil zaktualizowany!",
+      releaseNotes: "Noty wydania",
+      releases: {
+        r100: {
+          version: "1.0.0",
+          date: "26.03.2024",
+          note: "Premiera aplikacji: dodawanie wyników, tryb turniejowy, statystyki."
+        }
+      }
     },
     stats: {
       title: "Statystyki",
@@ -398,7 +406,15 @@ export const translations = {
       pwaDesc: "Use What's The Score? like a native app. Faster access, no browser bars, and better experience.",
       profile: "Your profile",
       saveProfile: "SAVE PROFILE",
-      profileSaved: "Profile updated!"
+      profileSaved: "Profile updated!",
+      releaseNotes: "Release notes",
+      releases: {
+        r100: {
+          version: "1.0.0",
+          date: "March 26, 2024",
+          note: "App launch: add results, tournament mode, statistics."
+        }
+      }
     },
     stats: {
       title: "Statistics",

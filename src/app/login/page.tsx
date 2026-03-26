@@ -68,10 +68,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold italic tracking-tighter text-primary">{t.home.title}</h1>
-          <p className="text-muted mt-2">{t.home.subtitle}</p>
+          <p className="text-muted mt-2 px-6 text-sm font-bold uppercase tracking-widest opacity-60 italic">{t.home.subtitle}</p>
         </div>
 
-        <div className="card shadow-2xl min-h-[360px] flex flex-col justify-center p-6">
+        <div className="card shadow-2xl p-6">
           <form onSubmit={handleLogin} noValidate className="space-y-4">
             {error && (
               <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-sm font-bold flex items-center justify-center text-center shadow-[0_0_20px_rgba(239,68,68,0.1)]">

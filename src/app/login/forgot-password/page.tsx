@@ -46,8 +46,8 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (otp.length !== 8) return
     
     setVerificationLoading(true)
@@ -67,6 +67,43 @@ export default function ForgotPasswordPage() {
     }
   }
 
+  const handleOtpInput = (value: string, index: number) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    if (!digit && value !== '') return;
+
+    const newOtp = otp.split('');
+    newOtp[index] = digit;
+    const combined = newOtp.join('').slice(0, 8);
+    setOtp(combined);
+
+    if (digit && index < 7) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
+    }
+    
+    if (combined.length === 8 && !combined.includes(' ')) {
+      // Auto-submit could be handled here if desired
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      prevInput?.focus();
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8);
+    if (pastedData) {
+      setOtp(pastedData);
+      // Focus the last input or the one after the last pasted digit
+      const nextIndex = Math.min(pastedData.length, 7);
+      document.getElementById(`otp-${nextIndex}`)?.focus();
+    }
+  }
+
   // Common Header for both views
   const renderHeader = (isOtp: boolean) => (
     <div className="text-center mb-8">
@@ -81,7 +118,6 @@ export default function ForgotPasswordPage() {
       <p className="text-muted mt-2 px-6 text-sm font-bold uppercase tracking-widest opacity-60 italic">
         {isOtp ? t.auth.enterCode : t.auth.forgotPasswordDesc}
       </p>
-      {isOtp && <p className="text-primary text-[10px] font-black mt-2 tracking-widest italic">{email}</p>}
     </div>
   )
 
@@ -99,24 +135,22 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] italic ml-1">{t.auth.email}</label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    className="w-full h-[56px] bg-white/5 border border-white/10 rounded-2xl px-5 focus:outline-none focus:border-primary transition-all text-white font-bold placeholder:text-white/20"
-                    placeholder={t.auth.emailPlaceholder}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.email}</label>
+                <input
+                  type="email"
+                  required
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
+                  placeholder={t.auth.emailPlaceholder}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full h-[56px] text-lg font-black italic tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_30px_rgba(198,255,0,0.15)] rounded-2xl uppercase"
+                className="btn-primary w-full h-[56px] text-lg"
               >
                 {loading ? (
                   <Loader2 className="w-6 h-6 animate-spin mx-auto" />
@@ -136,24 +170,30 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] italic ml-1 tracking-widest">{t.auth.verificationCode}</label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  className="w-full h-[56px] bg-white/5 border-2 border-primary/20 rounded-2xl p-4 text-center text-3xl font-black tracking-[0.4em] focus:outline-none focus:border-primary transition-all text-white placeholder:text-white/5 uppercase"
-                  placeholder="--------"
-                  maxLength={8}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0, 8))}
-                />
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-muted uppercase tracking-wider block text-center mb-2">{t.auth.verificationCode}</label>
+                <div className="flex justify-between gap-1 sm:gap-2" onPaste={handlePaste}>
+                  {[...Array(8)].map((_, i) => (
+                    <input
+                      key={i}
+                      id={`otp-${i}`}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      className="w-full h-12 sm:h-14 bg-black/40 border border-white/10 rounded-xl text-center text-xl font-bold focus:outline-none focus:border-primary transition-colors text-white"
+                      value={otp[i] || ''}
+                      onChange={(e) => handleOtpInput(e.target.value, i)}
+                      onKeyDown={(e) => handleKeyDown(e, i)}
+                    />
+                  ))}
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={verificationLoading || otp.length !== 8}
-                className="btn-primary w-full h-[56px] text-lg font-black italic tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_30px_rgba(198,255,0,0.15)] rounded-2xl uppercase"
+                className="btn-primary w-full h-[56px] text-lg"
               >
                 {verificationLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin mx-auto" />
