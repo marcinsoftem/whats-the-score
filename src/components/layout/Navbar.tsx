@@ -42,10 +42,21 @@ export default function Navbar() {
   if (authPages.some(p => pathname?.startsWith(p))) return null
 
   const isNavItemActive = (path: string) => {
-    // If we're navigating somewhere, only that path is "active"
-    if (pendingPath) return pendingPath === path
-    // Otherwise, check current pathname
-    return pathname === path
+    const current = pendingPath || pathname
+    if (path === '/') return current === '/'
+    return current?.startsWith(path)
+  }
+
+  const handleNavClick = (e: React.MouseEvent, path: string) => {
+    if (pathname === path) {
+      e.preventDefault()
+      return
+    }
+    if (pendingPath && pendingPath !== path) {
+      e.preventDefault()
+      return
+    }
+    setPendingPath(path)
   }
 
   return (
@@ -53,7 +64,7 @@ export default function Navbar() {
       <Link 
         href="/" 
         className={`nav-item transition-all duration-300 ${isNavItemActive('/') ? 'active scale-110' : 'opacity-60'}`}
-        onClick={() => setPendingPath('/')}
+        onClick={(e) => handleNavClick(e, '/')}
       >
         <HomeIcon className="w-5 h-5" />
         <span className="text-[10px] font-black uppercase tracking-widest">{t.common.home}</span>
@@ -61,7 +72,7 @@ export default function Navbar() {
       <Link 
         href="/matches" 
         className={`nav-item transition-all duration-300 ${isNavItemActive('/matches') ? 'active scale-110' : 'opacity-60'}`}
-        onClick={() => setPendingPath('/matches')}
+        onClick={(e) => handleNavClick(e, '/matches')}
       >
         <Trophy className="w-5 h-5" />
         <span className="text-[10px] font-black uppercase tracking-widest">{t.common.matches}</span>
@@ -69,7 +80,7 @@ export default function Navbar() {
       <Link 
         href="/players" 
         className={`nav-item transition-all duration-300 ${isNavItemActive('/players') ? 'active scale-110' : 'opacity-60'}`}
-        onClick={() => setPendingPath('/players')}
+        onClick={(e) => handleNavClick(e, '/players')}
       >
         <Users className="w-5 h-5" />
         <span className="text-[10px] font-black uppercase tracking-widest">{t.common.players}</span>
@@ -77,7 +88,7 @@ export default function Navbar() {
       <Link 
         href="/stats" 
         className={`nav-item transition-all duration-300 ${isNavItemActive('/stats') ? 'active scale-110' : 'opacity-60'}`}
-        onClick={() => setPendingPath('/stats')}
+        onClick={(e) => handleNavClick(e, '/stats')}
       >
         <BarChart3 className="w-5 h-5" />
         <span className="text-[10px] font-black uppercase tracking-widest">{t.stats.title}</span>
@@ -94,7 +105,7 @@ export default function Navbar() {
         <Link 
           href="/settings" 
           className={`nav-item transition-all duration-300 ${isNavItemActive('/settings') ? 'active scale-110' : 'opacity-60'}`}
-          onClick={() => setPendingPath('/settings')}
+          onClick={(e) => handleNavClick(e, '/settings')}
         >
           <MoreHorizontal className="w-5 h-5" />
           <span className="text-[10px] font-black uppercase tracking-widest">{t.settings.more}</span>
