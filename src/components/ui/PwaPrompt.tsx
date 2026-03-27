@@ -52,48 +52,48 @@ export function PwaPrompt() {
         exit={{ opacity: 0, y: 100 }}
         className="fixed bottom-24 left-4 right-4 z-[200] max-w-md mx-auto"
       >
-        <div className="bg-background/80 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+        <div className="bg-[#1a1a1a]/98 backdrop-blur-2xl border border-white/15 p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group">
           {/* Subtle Glow */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full" />
           
           <button 
             onClick={handleDismiss}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors z-10"
           >
-            <X className="w-4 h-4 text-muted" />
+            <X className="w-5 h-5 text-muted" />
           </button>
-
-          <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                <Smartphone className="w-6 h-6" />
+ 
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                <Smartphone className="w-8 h-8" />
               </div>
               <div className="flex flex-col">
-                <h3 className="text-sm font-black uppercase tracking-widest text-foreground">{t.settings.installPwa}</h3>
-                <span className="text-[10px] font-bold text-muted uppercase italic tracking-tighter">What's The Score? Web App</span>
+                <h3 className="text-lg font-black uppercase tracking-tight text-foreground italic leading-tight">{t.settings.installPwa}</h3>
+                <span className="text-xs font-bold text-muted uppercase italic tracking-widest opacity-60">What's The Score?</span>
               </div>
             </div>
-
-            <p className="text-xs text-muted leading-relaxed font-medium">
+ 
+            <p className="text-sm text-foreground/80 leading-relaxed font-medium">
               {t.settings.pwaDesc}
             </p>
-
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+ 
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
               {platform === "ios" ? (
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
-                      <Share className="w-3 h-3 text-primary" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                      <Share className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="text-[11px] font-bold">{t.settings.pwaIos}</span>
+                    <span className="text-sm font-bold leading-snug">{t.settings.pwaIos}</span>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
-                    <MoreVertical className="w-3 h-3 text-secondary" />
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                    <MoreVertical className="w-4 h-4 text-secondary" />
                   </div>
-                  <span className="text-[11px] font-bold">{t.settings.pwaAndroid}</span>
+                  <span className="text-sm font-bold leading-snug">{t.settings.pwaAndroid}</span>
                 </div>
               )}
             </div>
