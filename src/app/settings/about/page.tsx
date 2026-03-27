@@ -1,7 +1,7 @@
 "use client"
 
 import AuthGuard from "@/components/auth/AuthGuard";
-import { ChevronLeft, ChevronDown, Share, MoreVertical, Smartphone, Info, User } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useState } from "react";
@@ -26,7 +26,7 @@ function AboutSettingsContent() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen p-6">
+    <div className="flex flex-col gap-8 pb-32">
       <header className="flex items-center gap-4 animate-in fade-in duration-500">
         <Link 
           href="/settings"
@@ -40,8 +40,8 @@ function AboutSettingsContent() {
       </header>
 
       <div className="flex flex-col gap-6">
-        <div className="card p-6 bg-[#1a1a1a] border-white/5 flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-500 delay-50 shadow-lg">
-          <p className="text-base text-white/80 leading-relaxed font-medium italic">
+        <div className="card p-6 bg-accent/10 border-white/5 flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-500 delay-50">
+          <p className="text-sm text-muted leading-relaxed font-medium whitespace-pre-line">
             {t.settings.aboutDesc}
           </p>
         </div>
@@ -71,13 +71,12 @@ function AboutSettingsContent() {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="card p-6 bg-[#1a1a1a] border-primary/20 flex flex-col gap-3 shadow-xl">
-                  <span className="text-xs font-black uppercase tracking-widest text-primary italic">Kontakt</span>
+                <div className="card p-6 bg-primary/5 border-primary/10 flex flex-col gap-1 text-left">
+                  <p className="text-sm font-bold text-foreground">Marcin Mikłas</p>
                   <a 
                     href="mailto:marcin@softem.pl" 
-                    className="text-base font-bold text-white hover:text-primary transition-all flex items-center gap-2"
+                    className="text-sm text-muted/60 hover:text-primary transition-all"
                   >
-                    <User className="w-5 h-5 text-primary" />
                     marcin@softem.pl
                   </a>
                 </div>
@@ -109,46 +108,19 @@ function AboutSettingsContent() {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="card p-6 bg-[#1a1a1a] border-primary/20 flex flex-col gap-6 shadow-xl">
-                  <p className="text-base text-white/90 leading-relaxed font-bold italic">
+                <div className="card p-6 bg-primary/5 border-primary/10 flex flex-col gap-5">
+                  <p className="text-sm text-muted/80 leading-relaxed font-medium">
                     {t.settings.pwaDesc}
                   </p>
-                  
-                  <div className="grid gap-6">
-                    {/* iOS Section */}
-                    <div className="flex flex-col gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <span className="text-primary font-black text-xs">iOS</span>
-                        </div>
-                        <span className="text-xs font-black uppercase tracking-widest text-primary italic">Safari Browser</span>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                          <Share className="w-5 h-5 text-primary" />
-                        </div>
-                        <p className="text-sm text-foreground font-medium leading-relaxed pt-1">
-                          {t.settings.pwaIos}
-                        </p>
-                      </div>
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">iOS / Safari</span>
+                      <p className="text-sm text-foreground font-bold">{t.settings.pwaIos}</p>
                     </div>
-
-                    {/* Android Section */}
-                    <div className="flex flex-col gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
-                          <span className="text-secondary font-black text-xs">AND</span>
-                        </div>
-                        <span className="text-xs font-black uppercase tracking-widest text-secondary italic">Chrome Browser</span>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                          <MoreVertical className="w-5 h-5 text-secondary" />
-                        </div>
-                        <p className="text-sm text-foreground font-medium leading-relaxed pt-1">
-                          {t.settings.pwaAndroid}
-                        </p>
-                      </div>
+                    <div className="w-full h-px bg-white/5" />
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-secondary italic">Android / Chrome</span>
+                      <p className="text-sm text-foreground font-bold">{t.settings.pwaAndroid}</p>
                     </div>
                   </div>
                 </div>
@@ -180,14 +152,14 @@ function AboutSettingsContent() {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="card p-6 bg-[#1a1a1a] border-white/10 flex flex-col gap-6 shadow-xl">
+                <div className="card p-6 bg-accent/5 border-white/5 flex flex-col gap-6">
                   {Object.values(t.settings.releases).map((release: any) => (
-                    <div key={release.version} className="space-y-4">
+                    <div key={release.version} className="space-y-2">
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tighter uppercase italic">{release.version}</span>
-                        <span className="text-xs font-black text-muted/40 uppercase tracking-widest">{release.date}</span>
+                        <span className="text-xs font-black text-muted/40 uppercase tracking-widest italic">{release.date}</span>
                       </div>
-                      <p className="text-sm text-white/80 leading-snug">
+                      <p className="text-sm text-muted/80 leading-snug">
                         {release.note}
                       </p>
                     </div>

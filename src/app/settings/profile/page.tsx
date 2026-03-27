@@ -114,14 +114,14 @@ function ProfileSettingsContent() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen p-6 items-center justify-center">
+      <div className="flex flex-col gap-8 pb-32 items-center justify-center">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen p-6">
+    <div className="flex flex-col gap-8 pb-32">
       <header className="flex items-center gap-4 animate-in fade-in duration-500">
         <Link 
           href="/settings"

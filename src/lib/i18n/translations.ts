@@ -156,23 +156,24 @@ export const translations = {
       pl: "Polski",
       en: "Angielski",
       about: "O aplikacji",
-      aboutDesc: "What's The Score? to prosta i wygodna aplikacja do rejestrowania wyników meczów squasha. Umożliwia śledzenie historii gier, oferuje tryb turniejowy do organizacji rozgrywek oraz statystyki, które pomagają analizować postępy i poprawiać swoją grę.",
+      aboutDesc: "What's The Score? – zapisuj mecze i śledź postępy.\nWyniki, statystyki i turnieje w jednym miejscu.",
       version: "Wersja",
       logout: "Wyloguj się",
       logoutConfirm: "Czy na pewno chcesz się wylogować?",
       installPwa: "Zainstaluj aplikację",
-      pwaIos: "Kliknij ikonę udostępniania i wybierz 'Do ekranu początk.'",
-      pwaAndroid: "W menu przeglądarki wybierz 'Dodaj do ekranu głównego'.",
+      pwaIos: "iOS (Safari): Dotknij 'Udostępnij' i 'Do ekranu początkowego'",
+      pwaAndroid: "Android (Chrome): Dotknij 'Menu' (trzy kropki) i 'Zainstaluj aplikację'",
       pwaDesc: "Korzystaj z What's The Score? jak z natywnej aplikacji. Szybszy dostęp, brak pasków przeglądarki i lepsze doświadczenie.",
       profile: "Twój profil",
       saveProfile: "ZAPISZ PROFIL",
       profileSaved: "Profil zaktualizowany!",
       releaseNotes: "Noty wydania",
       author: "Autor",
+      contact: "Kontakt",
       releases: {
         r100: {
           version: "1.0.0",
-          date: "26.03.2024",
+          date: "26.03.2026",
           note: "Premiera aplikacji: dodawanie wyników, tryb turniejowy, statystyki."
         }
       }
@@ -397,23 +398,24 @@ export const translations = {
       pl: "Polish",
       en: "English",
       about: "About app",
-      aboutDesc: "What's The Score? is a simple and intuitive app to track your match scores. Created so you can focus on the game, not on counting points.",
+      aboutDesc: "What's The Score? – record matches and track progress.\nResults, statistics, and tournaments in one place.",
       version: "Version",
       logout: "Log out",
       logoutConfirm: "Are you sure you want to log out?",
       installPwa: "Install app",
-      pwaIos: "Tap the share icon and select 'Add to Home Screen'.",
-      pwaAndroid: "In the browser menu, select 'Add to Home screen'.",
+      pwaIos: "iOS (Safari): Tap 'Share' and 'Add to Home Screen'",
+      pwaAndroid: "Android (Chrome): Tap 'Menu' (three dots) and 'Install app'",
       pwaDesc: "Use What's The Score? like a native app. Faster access, no browser bars, and better experience.",
       profile: "Your profile",
       saveProfile: "SAVE PROFILE",
       profileSaved: "Profile updated!",
       releaseNotes: "Release notes",
       author: "Author",
+      contact: "Contact",
       releases: {
         r100: {
           version: "1.0.0",
-          date: "March 26, 2024",
+          date: "March 26, 2026",
           note: "App launch: add results, tournament mode, statistics."
         }
       }

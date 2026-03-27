@@ -71,7 +71,7 @@ export default function Navbar() {
       </Link>
       <Link 
         href="/matches" 
-        className={`nav-item transition-all duration-300 ${isNavItemActive('/matches') ? 'active scale-110' : 'opacity-60'}`}
+        className={`nav-item transition-all duration-300 ${(isNavItemActive('/matches') || isNavItemActive('/tournaments')) ? 'active scale-110' : 'opacity-60'}`}
         onClick={(e) => handleNavClick(e, '/matches')}
       >
         <Trophy className="w-5 h-5" />

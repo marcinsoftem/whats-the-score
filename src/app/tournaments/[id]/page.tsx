@@ -344,7 +344,7 @@ function TournamentContent() {
   if (!isLoaded) return <Preloader />;
 
   return (
-    <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto">
+    <div className="flex flex-col gap-8 pb-32">
       {/* Header */}
       <header className="flex items-center gap-4">
         <button

@@ -170,7 +170,7 @@ function PlayersPageContent() {
   if (!isLoaded) return <Preloader />;
 
   return (
-    <div className="flex flex-col gap-8 pb-20 max-w-md mx-auto relative min-h-screen">
+    <div className="flex flex-col gap-8 pb-20 relative">
       <header className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
           <Link 

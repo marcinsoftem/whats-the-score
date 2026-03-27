@@ -77,7 +77,7 @@ function SettingsContent() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen">
+    <div className="flex flex-col gap-8 pb-32">
       <header className="flex items-center gap-4">
         <Link 
           href="/"
@@ -90,7 +90,7 @@ function SettingsContent() {
         </h1>
       </header>
 
-      <div className="flex flex-col gap-6 px-4">
+      <div className="flex flex-col gap-6">
         {/* Profile Card */}
         {session && (
           <section className="flex flex-col gap-4">

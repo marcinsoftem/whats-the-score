@@ -438,7 +438,7 @@ function MatchPageContent() {
   if (!isLoaded || isDeleting) return <Preloader />;
 
   return (
-    <div className="flex flex-col gap-8 pb-32">
+    <div className="flex flex-col gap-5 pb-32">
       <header className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <button 
@@ -535,7 +535,7 @@ function MatchPageContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:gap-8 items-start py-4 relative">
+      <div className="grid grid-cols-2 gap-4 sm:gap-8 items-start py-2 relative">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[1px] h-3/4 bg-white/5 hidden sm:block" />
         
         <div className="flex flex-col gap-8">

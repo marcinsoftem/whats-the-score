@@ -17,7 +17,7 @@ function PwaSettingsContent() {
   const { t } = useLanguage();
 
   return (
-    <div className="flex flex-col gap-8 pb-32 max-w-md mx-auto min-h-screen p-6">
+    <div className="flex flex-col gap-8 pb-32">
       <header className="flex items-center gap-4">
         <Link 
           href="/settings"
