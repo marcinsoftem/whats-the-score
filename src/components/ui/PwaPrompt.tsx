@@ -11,30 +11,43 @@ export function PwaPrompt() {
   const [platform, setPlatform] = useState<"ios" | "android" | null>(null)
 
   useEffect(() => {
-    // Check if site is already in standalone mode
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone === true
+    const checkPwaStatus = () => {
+      // Check if site is already in standalone mode
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+        || (window.navigator as any).standalone === true
 
-    if (isStandalone) return
+      if (isStandalone) return
 
-    // Identify platform
-    const userAgent = window.navigator.userAgent.toLowerCase()
-    const isIos = /iphone|ipad|ipod/.test(userAgent)
-    const isAndroid = /android/.test(userAgent)
+      // Identify platform
+      const userAgent = window.navigator.userAgent.toLowerCase()
+      const isIos = /iphone|ipad|ipod/.test(userAgent)
+      const isAndroid = /android/.test(userAgent)
 
-    // Check if user dismissed it recently
-    const dismissed = localStorage.getItem("pwa_prompt_dismissed")
-    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-    
-    if (dismissed && parseInt(dismissed) > oneWeekAgo) return
+      // Identify if we're on mobile
+      const isMobile = isIos || isAndroid || /mobile|tablet|ipad|android/.test(userAgent)
 
-    if (isIos) {
-      setPlatform("ios")
-      setShow(true)
-    } else if (isAndroid) {
-      setPlatform("android")
-      setShow(true)
+      // Check if user dismissed it recently (changing to 1 hour for testing)
+      const dismissed = localStorage.getItem("pwa_prompt_dismissed")
+      const cooldownPeriod = 60 * 60 * 1000 // 1 hour
+      const recentlyDismissed = dismissed && (Date.now() - parseInt(dismissed)) < cooldownPeriod
+      
+      if (recentlyDismissed) return
+
+      if (isIos) {
+        setPlatform("ios")
+        setShow(true)
+      } else if (isAndroid) {
+        setPlatform("android")
+        setShow(true)
+      } else if (isMobile) {
+        // Fallback for generic mobile
+        setPlatform("android")
+        setShow(true)
+      }
     }
+
+    const timer = setTimeout(checkPwaStatus, 1000)
+    return () => clearTimeout(timer)
   }, [])
 
   const handleDismiss = () => {
