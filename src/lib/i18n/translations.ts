@@ -148,6 +148,7 @@ export const translations = {
       enterCode: "Wpisz 8-cyfrowy kod otrzymany e-mailem",
       verifyButton: "WERYFIKUJ KOD",
       invalidCodeError: "Nieprawidłowy lub wygasły kod. Spróbuj ponownie.",
+      signUpSubtitle: "Rejestracja",
     },
     settings: {
       title: "Ustawienia",
@@ -390,6 +391,7 @@ export const translations = {
       enterCode: "Enter the 8-digit code received by email",
       verifyButton: "VERIFY CODE",
       invalidCodeError: "Invalid or expired code. Please try again.",
+      signUpSubtitle: "Registration",
     },
     settings: {
       title: "Settings",

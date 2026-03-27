@@ -166,7 +166,7 @@ function RegisterContent() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold italic tracking-tighter text-primary">{t.home.title}</h1>
-          <p className="text-muted mt-2">{t.home.subtitle}</p>
+          <p className="text-muted mt-2 px-6 text-sm font-bold uppercase tracking-widest opacity-60 italic">{t.auth.signUpSubtitle}</p>
         </div>
 
         <div className="card shadow-2xl relative overflow-hidden min-h-[360px] flex flex-col justify-center p-6">
