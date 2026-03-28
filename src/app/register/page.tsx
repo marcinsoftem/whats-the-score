@@ -34,10 +34,32 @@ function RegisterContent() {
 
   // migrateMatches function removed - now handled by DB trigger handle_new_user with invite_id
 
+  const validateStep1 = () => {
+    setError(null);
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError(t.auth.errors.invalidEmail);
+      return false;
+    }
+
+    // Password validation (min 6 characters)
+    if (password.length < 6) {
+      setError(t.auth.errors.passwordTooShort);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e?.preventDefault()
+    
     if (step === 1) {
-      setStep(2)
+      if (validateStep1()) {
+        setStep(2)
+      }
       return
     }
 
@@ -232,8 +254,7 @@ function RegisterContent() {
                 </div>
 
                 <button
-                  type="button"
-                  onClick={() => setStep(2)}
+                  type="submit"
                   className="btn-primary w-full h-[56px] text-lg"
                 >
                   {t.auth.nextStep}

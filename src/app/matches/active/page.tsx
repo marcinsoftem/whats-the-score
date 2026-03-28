@@ -438,9 +438,23 @@ function MatchPageContent() {
   if (!isLoaded || isDeleting) return <Preloader />;
 
   return (
-    <div className="flex flex-col gap-5 pb-32">
-      <header className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-4 pb-32">
+      <header className="flex flex-col gap-3 relative">
+        {/* Sync Status Overlay (Subtle) */}
+        <div className="absolute -top-1 left-0 right-0 flex justify-center pointer-events-none z-50">
+          {saveError ? (
+            <div className="bg-secondary/10 border border-secondary/20 px-3 py-1 rounded-full flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <span className="text-[10px] font-black uppercase text-secondary italic tracking-tight">Sync Error: {saveError}</span>
+            </div>
+          ) : isSaving ? (
+            <div className="px-3 py-1 flex items-center gap-2 bg-primary/10 rounded-full border border-primary/20 animate-in fade-in slide-in-from-top-1 duration-300">
+              <Loader2 className="w-3 h-3 animate-spin text-primary" />
+              <span className="text-[10px] font-black uppercase text-primary italic tracking-tight">Sync</span>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-4 pt-4">
           <button 
             onClick={handleGoBack}
             className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-90 transition-transform text-foreground"
@@ -486,37 +500,24 @@ function MatchPageContent() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 group">
+        <div className={`flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 group ${isCompleted ? 'opacity-80' : ''}`}>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-all group-hover:bg-primary/20">
+            <div className={`w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-all ${!isCompleted && 'group-hover:bg-primary/20'}`}>
               <Calendar className="w-4 h-4" />
             </div>
-            <span className="text-[11px] uppercase font-black tracking-widest text-muted group-hover:text-primary transition-colors">{t.matches.active.matchDate}</span>
+            <span className={`text-[11px] uppercase font-black tracking-widest text-muted transition-colors ${!isCompleted && 'group-hover:text-primary'}`}>{t.matches.active.matchDate}</span>
           </div>
           <input 
             type="date" 
             value={matchDate}
             onChange={(e) => {
+              if (isCompleted) return;
               setMatchDate(e.target.value);
               setHasInteracted(true);
             }}
-            className="bg-transparent text-sm font-bold text-foreground outline-none border-none p-0 focus:ring-0 cursor-pointer selection:bg-primary/30"
+            disabled={isCompleted}
+            className={`bg-transparent text-sm font-bold text-foreground outline-none border-none p-0 focus:ring-0 selection:bg-primary/30 ${isCompleted ? 'cursor-default' : 'cursor-pointer'}`}
           />
-        </div>
-
-        {/* Sync Status Overlay (Subtle) */}
-        <div className="h-1 text-center relative">
-          {saveError && (
-            <div className="absolute top-0 left-0 right-0 bg-secondary/10 border border-secondary/20 p-2 rounded-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 z-50">
-              <span className="text-[11px] font-black uppercase text-secondary italic">Sync Error: {saveError}</span>
-            </div>
-          )}
-          {isSaving && !saveError && (
-            <div className="absolute top-0 right-0 p-1 flex items-center gap-2 bg-primary/10 rounded-full border border-primary/20 pr-3 animate-in fade-in slide-in-from-top-1 duration-300">
-              <Loader2 className="w-3 h-3 animate-spin text-primary" />
-              <span className="text-[10px] font-black uppercase text-primary italic tracking-tight">Sync</span>
-            </div>
-          )}
         </div>
       </header>
 
