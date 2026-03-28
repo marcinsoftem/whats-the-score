@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useState, useEffect } from "react";
+import { APP_CONFIG } from "@/lib/config";
 
 export default function SettingsPage() {
   return (
@@ -100,7 +101,7 @@ function SettingsContent() {
             >
               <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-white/5 flex items-center justify-center relative overflow-hidden group-hover:ring-2 ring-primary/30 transition-all">
                 <img 
-                  src={`https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed || 'Ty'}`} 
+                  src={APP_CONFIG.avatars.generateUrl(avatarSeed || 'Ty')} 
                   alt="Avatar" 
                   className="w-full h-full object-cover" 
                 />

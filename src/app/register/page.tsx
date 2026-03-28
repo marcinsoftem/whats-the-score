@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { UserPlus, Loader2, FastForward, CheckCircle2, Globe, Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { APP_CONFIG } from '@/lib/config'
 
 function RegisterContent() {
   const { t, language, setLanguage } = useLanguage()
@@ -75,7 +76,7 @@ function RegisterContent() {
       return
     }
 
-    const avatarUrl = `https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed}`
+    const avatarUrl = APP_CONFIG.avatars.generateUrl(avatarSeed)
 
     const isValidUUID = (id: string | null) => {
       if (!id) return false;
@@ -250,7 +251,7 @@ function RegisterContent() {
                     <div className="w-24 h-24 rounded-full bg-accent/20 border-2 border-white/5 mx-auto flex items-center justify-center relative overflow-hidden ring-4 ring-primary/10 transition-all duration-300 group-hover:ring-primary/30 group-active:scale-95">
                       <img 
                         key={avatarSeed}
-                        src={`https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed}`} 
+                        src={APP_CONFIG.avatars.generateUrl(avatarSeed)} 
                         alt="Avatar preview" 
                         className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" 
                       />
