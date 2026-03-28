@@ -4,11 +4,13 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { ChevronLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import pkg from "@/../package.json";
 
 import { PwaInstallationSteps } from "@/components/pwa/PwaInstallationSteps";
+import { createClient } from "@/lib/supabase/client";
+import { APP_CONFIG } from "@/lib/config";
 
 export default function AboutSettingsPage() {
   return (
@@ -21,7 +23,36 @@ export default function AboutSettingsPage() {
 function AboutSettingsContent() {
   const { t } = useLanguage();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [authorProfile, setAuthorProfile] = useState<{nickname: string, avatarSeed: string | null} | null>(null);
   const version = pkg.version;
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadAuthor() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('nickname, avatar_url')
+        .eq('id', APP_CONFIG.author.profileId)
+        .single();
+        
+      if (data) {
+        let seed = null;
+        if (data.avatar_url) {
+          try {
+            const url = new URL(data.avatar_url);
+            seed = url.searchParams.get('seed') || url.pathname.split('/').pop()?.replace('.svg', '');
+          } catch (e) {
+            seed = APP_CONFIG.author.profileId;
+          }
+        }
+        setAuthorProfile({
+          nickname: data.nickname || "Marcin Mikłas",
+          avatarSeed: seed || APP_CONFIG.author.profileId
+        });
+      }
+    }
+    loadAuthor();
+  }, [supabase]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -73,14 +104,27 @@ function AboutSettingsContent() {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="card p-6 bg-primary/5 border-primary/10 flex flex-col gap-1 text-left">
-                  <p className="text-sm font-bold text-foreground">Marcin Mikłas</p>
-                  <a 
-                    href="mailto:marcin@softem.pl" 
-                    className="text-sm text-muted/60 hover:text-primary transition-all"
-                  >
-                    marcin@softem.pl
-                  </a>
+                <div className="card p-6 bg-primary/5 border-primary/10 flex items-center gap-4 text-left">
+                  <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-white/5 flex items-center justify-center relative overflow-hidden shrink-0">
+                    {authorProfile ? (
+                      <img 
+                        src={APP_CONFIG.avatars.generateUrl(authorProfile.avatarSeed || APP_CONFIG.author.profileId)} 
+                        alt="Author" 
+                        className="w-full h-full object-cover animate-in fade-in" 
+                      />
+                    ) : (
+                      <div className="w-full h-full animate-pulse bg-white/5" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-bold text-foreground">{authorProfile?.nickname || "Marcin Mikłas"}</p>
+                    <a 
+                      href={`mailto:${APP_CONFIG.author.email}`}
+                      className="text-sm text-muted/60 hover:text-primary transition-all"
+                    >
+                      {APP_CONFIG.author.email}
+                    </a>
+                  </div>
                 </div>
               </motion.div>
             )}

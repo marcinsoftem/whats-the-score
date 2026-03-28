@@ -10,8 +10,12 @@ export const APP_CONFIG = {
     // Helper function to generate avatar URLs consistently
     generateUrl: (seed: string) => {
       // You can add additional query parameters here in the future
-      // example: return `${APP_CONFIG.avatars.endpoint}?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4`
       return `${APP_CONFIG.avatars.endpoint}?seed=${encodeURIComponent(seed)}`;
     }
+  },
+  author: {
+    // Unique identifier for the author's profile in the database
+    profileId: "a4958742-3316-406a-870c-9ff53cb3bfb1",
+    email: "marcin@softem.pl"
   }
 };
