@@ -4,6 +4,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { PwaInstallationSteps } from "@/components/pwa/PwaInstallationSteps";
 
 export default function PwaSettingsPage() {
   return (
@@ -35,17 +36,7 @@ function PwaSettingsContent() {
           <p className="text-sm text-muted/80 leading-relaxed font-medium">
             {t.settings.pwaDesc}
           </p>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">iOS / Safari</span>
-              <p className="text-sm text-foreground font-bold">{t.settings.pwaIos}</p>
-            </div>
-            <div className="w-full h-px bg-white/5" />
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-secondary italic">Android / Chrome</span>
-              <p className="text-sm text-foreground font-bold">{t.settings.pwaAndroid}</p>
-            </div>
-          </div>
+          <PwaInstallationSteps />
         </div>
       </div>
     </div>

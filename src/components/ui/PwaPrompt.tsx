@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Smartphone, X, Share, MoreVertical } from "lucide-react"
+import { Smartphone, X, Share, MoreVertical, PlusSquare, ScreenShare, MoreHorizontal } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLanguage } from "@/lib/i18n/LanguageContext"
 
 export function PwaPrompt() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [show, setShow] = useState(false)
   const [platform, setPlatform] = useState<"ios" | "android" | null>(null)
 
@@ -91,23 +91,53 @@ export function PwaPrompt() {
               {t.settings.pwaDesc}
             </p>
  
-            <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
+            <div className="flex flex-col gap-2 px-2">
               {platform === "ios" ? (
-                <div className="flex flex-col gap-3">
+                <>
                   <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                      <Share className="w-4 h-4 text-primary" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                      <MoreHorizontal className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-sm font-bold leading-snug">{t.settings.pwaIos}</span>
+                    <span className="text-sm font-bold text-foreground">
+                      {language === 'pl' ? 'Więcej' : 'More'}
+                    </span>
                   </div>
-                </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                      <Share className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-sm font-bold text-foreground">
+                      {language === 'pl' ? 'Udostępnij' : 'Share'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                      <PlusSquare className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-sm font-bold text-foreground">
+                      {language === 'pl' ? 'Do ekranu głównego' : 'Add to Home Screen'}
+                    </span>
+                  </div>
+                </>
               ) : (
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                    <MoreVertical className="w-4 h-4 text-secondary" />
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0 border border-secondary/20">
+                      <MoreVertical className="w-5 h-5 text-secondary" />
+                    </div>
+                    <span className="text-sm font-bold text-foreground">
+                      {language === 'pl' ? 'Więcej' : 'More'}
+                    </span>
                   </div>
-                  <span className="text-sm font-bold leading-snug">{t.settings.pwaAndroid}</span>
-                </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0 border border-secondary/20">
+                      <ScreenShare className="w-5 h-5 text-secondary" />
+                    </div>
+                    <span className="text-sm font-bold text-foreground">
+                      {language === 'pl' ? 'Zainstaluj aplikację' : 'Install app'}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
           </div>

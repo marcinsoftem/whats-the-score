@@ -8,6 +8,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import pkg from "@/../package.json";
 
+import { PwaInstallationSteps } from "@/components/pwa/PwaInstallationSteps";
+
 export default function AboutSettingsPage() {
   return (
     <AuthGuard>
@@ -113,15 +115,7 @@ function AboutSettingsContent() {
                     {t.settings.pwaDesc}
                   </p>
                   <div className="space-y-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">iOS / Safari</span>
-                      <p className="text-sm text-foreground font-bold">{t.settings.pwaIos}</p>
-                    </div>
-                    <div className="w-full h-px bg-white/5" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-secondary italic">Android / Chrome</span>
-                      <p className="text-sm text-foreground font-bold">{t.settings.pwaAndroid}</p>
-                    </div>
+                    <PwaInstallationSteps />
                   </div>
                 </div>
               </motion.div>
@@ -155,9 +149,9 @@ function AboutSettingsContent() {
                 <div className="card p-6 bg-accent/5 border-white/5 flex flex-col gap-6">
                   {Object.values(t.settings.releases).map((release: any) => (
                     <div key={release.version} className="space-y-2">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tighter uppercase italic">{release.version}</span>
-                        <span className="text-xs font-black text-muted/40 uppercase tracking-widest italic">{release.date}</span>
+                      <div className="flex justify-between items-end mb-1">
+                        <span className="text-sm font-black text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tighter uppercase italic -ml-2">{release.version}</span>
+                        <span className="text-sm font-black text-muted/40 uppercase tracking-tighter italic">{release.date}</span>
                       </div>
                       <p className="text-sm text-muted/80 leading-snug">
                         {release.note}
