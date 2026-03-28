@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
 
   const handleVerifyOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    if (otp.length !== 8) return
+    if (otp.length !== 6) return
     
     setVerificationLoading(true)
     setError(null)
@@ -73,15 +73,15 @@ export default function ForgotPasswordPage() {
 
     const newOtp = otp.split('');
     newOtp[index] = digit;
-    const combined = newOtp.join('').slice(0, 8);
+    const combined = newOtp.join('').slice(0, 6);
     setOtp(combined);
 
-    if (digit && index < 7) {
+    if (digit && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       nextInput?.focus();
     }
     
-    if (combined.length === 8 && !combined.includes(' ')) {
+    if (combined.length === 6 && !combined.includes(' ')) {
       // Auto-submit could be handled here if desired
     }
   }
@@ -95,11 +95,11 @@ export default function ForgotPasswordPage() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8);
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (pastedData) {
       setOtp(pastedData);
       // Focus the last input or the one after the last pasted digit
-      const nextIndex = Math.min(pastedData.length, 7);
+      const nextIndex = Math.min(pastedData.length, 5);
       document.getElementById(`otp-${nextIndex}`)?.focus();
     }
   }
@@ -173,7 +173,7 @@ export default function ForgotPasswordPage() {
               <div className="space-y-4">
                 <label className="text-sm font-medium text-muted uppercase tracking-wider block text-center mb-2">{t.auth.verificationCode}</label>
                 <div className="flex justify-between gap-1 sm:gap-2" onPaste={handlePaste}>
-                  {[...Array(8)].map((_, i) => (
+                  {[...Array(6)].map((_, i) => (
                     <input
                       key={i}
                       id={`otp-${i}`}
@@ -192,7 +192,7 @@ export default function ForgotPasswordPage() {
 
               <button
                 type="submit"
-                disabled={verificationLoading || otp.length !== 8}
+                disabled={verificationLoading || otp.length !== 6}
                 className="btn-primary w-full h-[56px] text-lg"
               >
                 {verificationLoading ? (

@@ -18,7 +18,6 @@ function RegisterContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -28,12 +27,6 @@ function RegisterContent() {
   const inviteSeed = searchParams.get('seed')
 
   useEffect(() => {
-    // Detect PWA mode
-    setIsStandalone(
-      window.matchMedia('(display-mode: standalone)').matches || 
-      (navigator as any).standalone === true
-    )
-    
     if (inviteNickname) setNickname(inviteNickname)
     if (inviteSeed) setAvatarSeed(inviteSeed)
   }, [inviteNickname, inviteSeed])
@@ -93,7 +86,7 @@ function RegisterContent() {
     const cleanInviteId = isValidUUID(inviteId) ? inviteId : null;
     console.log('Registering with:', { email, nickname, cleanInviteId });
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -108,6 +101,29 @@ function RegisterContent() {
       },
     })
 
+    if (signUpData?.user) {
+      // 1. Sprawdzenie dla potwiewrdzonych maili (Supabase zwraca puste identities)
+      if (signUpData.user.identities && signUpData.user.identities.length === 0) {
+        setError(t.auth.errors.emailTaken)
+        setLoading(false)
+        return
+      }
+
+      // 2. Sprawdzenie dla niepotwierdzonych maili (Supabase "odświeża" token i updated_at)
+      if (signUpData.user.created_at && signUpData.user.updated_at) {
+        const createdTime = new Date(signUpData.user.created_at).getTime();
+        const updatedTime = new Date(signUpData.user.updated_at).getTime();
+        
+        // Jeżeli updated_at jest nowszy o ponad 3 sekundy niż created_at,
+        // oznacza to, że konto istniało już w bazie (mimo że niepotwierdzone).
+        if (updatedTime - createdTime > 3000) {
+          setError(t.auth.errors.emailTaken)
+          setLoading(false)
+          return
+        }
+      }
+    }
+
     if (signUpError) {
       console.error('Registration error details:', signUpError);
       
@@ -117,7 +133,7 @@ function RegisterContent() {
       if (lowerError.includes('rate limit')) {
         errorMessage = t.auth.errors.rateLimit;
       } else if (lowerError.includes('already exists') || lowerError.includes('registered')) {
-        errorMessage = t.players.alreadyExists;
+        errorMessage = t.auth.errors.emailTaken;
       } else {
         errorMessage = signUpError.message;
       }
@@ -132,22 +148,17 @@ function RegisterContent() {
 
   if (isSuccess) {
     return (
-      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0 animate-in fade-in duration-700">
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="space-y-4">
-            <h1 className="text-4xl font-black italic tracking-tighter text-primary animate-in fade-in slide-in-from-top-4 duration-500">
+            <h1 className="text-4xl font-black italic tracking-tighter text-primary">
               {t.auth.signUpSuccessTitle}
             </h1>
-            <p className="text-muted text-base leading-relaxed px-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
+            <p className="text-muted text-base leading-relaxed px-4">
               {t.auth.signUpSuccessDesc}
             </p>
-            {!isStandalone && (
-              <p className="text-primary text-xs font-bold uppercase tracking-widest mt-4 animate-pulse px-8">
-                {t.auth.returnToPwa}
-              </p>
-            )}
           </div>
-          <div className="pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+          <div className="pt-4">
             <Link 
               href="/login" 
               className="btn-primary w-full h-[56px] text-lg flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(198,255,0,0.2)]"
@@ -169,7 +180,7 @@ function RegisterContent() {
           <p className="text-muted mt-2 px-6 text-sm font-bold uppercase tracking-widest opacity-60 italic">{t.auth.signUpSubtitle}</p>
         </div>
 
-        <div className="card shadow-2xl relative overflow-hidden min-h-[360px] flex flex-col justify-center p-6">
+        <div className="card shadow-2xl relative overflow-hidden p-6">
           <div className="absolute top-0 left-0 w-full h-1">
             <div 
               className="h-full bg-primary transition-all duration-500" 

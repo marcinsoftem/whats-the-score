@@ -63,94 +63,106 @@ function ResetPasswordContent() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0 animate-in fade-in duration-700">
+        <div className="w-full max-w-md space-y-8 text-center">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-black italic tracking-tighter text-primary uppercase">
+              {t.common.success}
+            </h1>
+            <p className="text-muted text-base leading-relaxed px-4">
+              {t.auth.passwordChanged}
+            </p>
+          </div>
+          <div className="pt-4">
+            <Link 
+              href="/login" 
+              className="btn-primary w-full h-[56px] text-lg flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(198,255,0,0.2)]"
+            >
+              <CheckCircle2 className="w-6 h-6" />
+              {t.auth.signIn.toUpperCase()}
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground overflow-hidden overscroll-none fixed inset-0">
       <div className="w-full max-w-md space-y-2">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold italic tracking-tighter text-primary uppercase">{t.home.title}</h1>
           <p className="text-muted mt-2 px-6 text-sm font-bold uppercase tracking-widest opacity-60 italic">
-            {success ? t.common.success : t.auth.resetPasswordTitle}
+            {t.auth.resetPasswordTitle}
           </p>
         </div>
 
         <div className="card shadow-2xl p-8 bg-black/40 border border-white/5 rounded-[32px] backdrop-blur-xl">
-          {success ? (
-            <div className="space-y-6 text-center animate-in zoom-in duration-500">
-              <div className="py-6">
-                <p className="text-white text-lg font-bold italic uppercase tracking-tight">{t.auth.passwordChanged}</p>
+          <form onSubmit={handleResetPassword} className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-[10px] font-black uppercase tracking-widest text-center italic">
+                {error}
               </div>
-              <Link 
-                href="/login" 
-                className="btn-primary w-full h-[56px] text-lg rounded-2xl flex items-center justify-center uppercase"
-              >
-                {t.common.login}
-              </Link>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.password}</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
+                    placeholder={t.auth.passwordPlaceholder}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors p-1 rounded-lg"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.confirmPassword}</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
+                    placeholder={t.auth.confirmPassword}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors p-1 rounded-lg"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
             </div>
-          ) : (
-            <form onSubmit={handleResetPassword} className="space-y-6">
-              {error && (
-                <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl text-red-400 text-[10px] font-black uppercase tracking-widest text-center italic">
-                  {error}
-                </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full h-[56px] text-lg"
+            >
+              {loading ? (
+                <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+              ) : (
+                t.auth.saveNewPasswordButton
               )}
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.password}</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                      placeholder={t.auth.passwordPlaceholder}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors p-1 rounded-lg"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.auth.confirmPassword}</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      className="w-full bg-black/40 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary transition-colors text-white"
-                      placeholder={t.auth.confirmPassword}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors p-1 rounded-lg"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full h-[56px] text-lg"
-              >
-                {loading ? (
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                ) : (
-                  t.auth.saveNewPasswordButton
-                )}
-              </button>
-            </form>
-          )}
+            </button>
+          </form>
         </div>
 
         <div className="flex justify-center mt-8 text-center">
