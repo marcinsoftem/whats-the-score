@@ -81,7 +81,7 @@ function ProfileSettingsContent() {
         return;
       }
 
-      const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`;
+      const avatarUrl = `https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed}`;
 
       const { error: pError } = await supabase
         .from('profiles')
@@ -143,7 +143,7 @@ function ProfileSettingsContent() {
             >
               <div className="w-24 h-24 rounded-full bg-accent/20 border-2 border-white/5 flex items-center justify-center relative overflow-hidden ring-4 ring-primary/10 transition-all duration-300 group-hover:ring-primary/30 group-active:scale-95">
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed || 'user'}&clothing=graphicShirt&accessoriesProbability=0`} 
+                  src={`https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed || 'user'}`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover" 
                 />

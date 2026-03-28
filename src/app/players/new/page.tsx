@@ -120,7 +120,7 @@ function AddPlayerContent() {
       return;
     }
     async function savePlayer() {
-      const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`;
+      const avatarUrl = `https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed}`;
       const cleanNickLower = cleanNick.toLowerCase();
 
       if (isEdit) {
@@ -226,7 +226,7 @@ function AddPlayerContent() {
             <div className="w-28 h-28 rounded-full bg-accent/20 border-2 border-white/5 mx-auto flex items-center justify-center relative overflow-hidden ring-4 ring-primary/10 transition-all duration-300 group-hover:ring-primary/30 group-active:scale-95">
               {avatarSeed ? (
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&clothing=graphicShirt&accessoriesProbability=0`} 
+                  src={`https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed}`} 
                   alt="Avatar preview" 
                   className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" 
                 />

@@ -100,7 +100,7 @@ function SettingsContent() {
             >
               <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-white/5 flex items-center justify-center relative overflow-hidden group-hover:ring-2 ring-primary/30 transition-all">
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed || 'Ty'}&clothing=graphicShirt&accessoriesProbability=0`} 
+                  src={`https://api.dicebear.com/9.x/personas/svg?seed=${avatarSeed || 'Ty'}`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover" 
                 />
