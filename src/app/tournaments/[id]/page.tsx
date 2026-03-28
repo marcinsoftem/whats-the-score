@@ -354,14 +354,14 @@ function TournamentContent() {
           <ChevronLeft className="w-6 h-6" />
         </button>
 
-        <div className="flex-1 flex flex-col items-center min-w-0">
-          <h1 className="text-xl font-black tracking-tight uppercase italic text-primary">
+        <div className="flex-1 flex flex-col items-start min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight uppercase italic text-primary">
             {t.tournament.badge}
           </h1>
           {tournament?.created_at && (
             <div className="flex items-center gap-1.5 mt-0.5">
               <Trophy className="w-3 h-3 text-muted" />
-              <span className="text-[11px] uppercase font-black tracking-widest text-muted">
+              <span className="text-[11px] uppercase font-bold tracking-widest text-muted">
                 {formatDate(tournament.created_at)}
               </span>
             </div>

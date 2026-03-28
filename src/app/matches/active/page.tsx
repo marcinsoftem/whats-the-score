@@ -447,12 +447,12 @@ function MatchPageContent() {
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <div className="flex-1 flex flex-col items-center">
-            <h1 className="text-xl font-black tracking-tight uppercase italic text-primary">
+          <div className="flex-1 flex flex-col items-start px-2">
+            <h1 className="text-2xl font-bold tracking-tight uppercase italic text-primary">
               MECZ
             </h1>
             {tournamentName && (
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted italic -mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted italic -mt-1">
                 {tournamentName}
               </p>
             )}

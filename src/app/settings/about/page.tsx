@@ -34,7 +34,7 @@ function AboutSettingsContent() {
         >
           <ChevronLeft className="w-6 h-6" />
         </Link>
-        <h1 className="text-xl flex-1 font-black tracking-tight uppercase text-center pr-10 italic text-primary">
+        <h1 className="text-2xl flex-1 font-bold tracking-tight uppercase italic text-primary">
           {t.settings.about}
         </h1>
       </header>

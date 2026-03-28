@@ -255,7 +255,7 @@ function HomeContent() {
     <div className="flex flex-col gap-8">
       <header className="text-left">
         <h1 className="text-4xl font-bold italic tracking-tighter text-primary">{t.home.title}</h1>
-        <p className="text-muted mt-2">{t.home.subtitle}</p>
+        <p className="text-muted mt-2 text-sm font-bold uppercase tracking-widest opacity-60 italic">{t.home.subtitle}</p>
       </header>
 
       {error && (
@@ -286,7 +286,7 @@ function HomeContent() {
             </div>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-4 px-1 no-scrollbar -mx-4 scroll-px-4">
+          <div className="flex gap-4 overflow-x-auto pb-4 px-4 no-scrollbar -mx-4 scroll-px-4">
             {availablePlayers.map((player) => {
               const isSelected = selectedIds.includes(player.id);
               return (
