@@ -247,11 +247,11 @@ function AddPlayerContent() {
         </div>
       </header>
 
-      <form onSubmit={handleAddPlayer} className="flex flex-col gap-6 px-1">
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center px-1">
-            <label className="text-[10px] uppercase font-black tracking-widest text-muted italic">{t.players.nickname}</label>
-            <span className={`text-[10px] font-black ${nickname.length > 10 ? 'text-secondary' : 'text-muted/40'}`}>
+      <form onSubmit={handleAddPlayer} className="flex flex-col gap-6 px-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium text-muted uppercase tracking-wider">{t.players.nickname}</label>
+            <span className={`text-sm font-medium uppercase tracking-wider ${nickname.length > 10 ? 'text-secondary' : 'text-muted/40'}`}>
               {nickname.length}/10
             </span>
           </div>
@@ -260,10 +260,10 @@ function AddPlayerContent() {
             required
             autoFocus
             maxLength={10}
-            className={`w-full bg-white/5 border rounded-2xl p-4 text-lg font-bold text-foreground outline-none transition-all placeholder:text-muted/20 ${
-              error ? 'border-secondary/50 bg-secondary/5' : 'border-white/10 focus:border-primary/50'
+            className={`w-full bg-black/40 border rounded-xl p-3 text-white outline-none transition-all placeholder:text-muted/40 ${
+              error ? 'border-secondary/50 bg-secondary/10' : 'border-white/10 focus:border-primary'
             }`}
-            placeholder={t.players.nickname + "..."}
+            placeholder="Wpisz imię lub pseudonim..."
             value={nickname}
             onChange={(e) => {
               setNickname(e.target.value);
@@ -271,7 +271,7 @@ function AddPlayerContent() {
             }}
           />
           {error && (
-            <p className="text-[10px] font-black uppercase tracking-widest text-secondary text-center animate-pulse">{error}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-secondary text-center animate-in fade-in zoom-in duration-300">{error}</p>
           )}
         </div>
 

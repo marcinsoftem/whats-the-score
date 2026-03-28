@@ -78,7 +78,7 @@ function RegisterContent() {
       if (checkError) throw checkError;
 
       if (realProfiles && realProfiles.length > 0) {
-        setError('Ten pseudonim jest już zajęty przez innego zarejestrowanego użytkownika.');
+        setError('To imię jest już zajęte przez innego zarejestrowanego użytkownika.');
         setLoading(false);
         return;
       }
